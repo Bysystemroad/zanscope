@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 216 31% 6%;
+  --foreground: 0 0% 100%;
+  --card: 214 23% 11%;
+  --card-foreground: 0 0% 100%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 216 31% 6%;
+  --secondary: 215 20% 15%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 215 22% 13%;
+  --muted-foreground: 211 16% 67%;
+  --accent: 0 0% 100%;
+  --accent-foreground: 216 31% 6%;
+  --border: 215 22% 15%;
+  --input: 215 22% 15%;
+  --ring: 0 0% 100%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background:
+    radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 0.09), transparent 34rem),
+    radial-gradient(circle at 85% 12%, rgba(160, 176, 190, 0.07), transparent 30rem),
+    linear-gradient(180deg, #080f14 0%, #0b1118 48%, #080f14 100%);
+  color: hsl(var(--foreground));
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+.surface-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.glass-panel {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(145deg, rgba(17, 22, 29, 0.82), rgba(9, 15, 21, 0.72));
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(18px);
+}
+
+.premium-border {
+  position: relative;
+}
+
+.premium-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.055), rgba(175, 188, 200, 0.2));
+}
+
+.soft-white-glow {
+  box-shadow: 0 0 34px rgba(255, 255, 255, 0.12);
+}
+
+.radar-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@keyframes radar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes float-card {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-radar {
+  animation: radar-spin 12s linear infinite;
+}
+
+.animate-float-card {
+  animation: float-card 7s ease-in-out infinite;
+}
+
+.animated-gradient {
+  background-size: 220% 220%;
+  animation: gradient-shift 8s ease infinite;
+}
