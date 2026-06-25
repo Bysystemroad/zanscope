@@ -2,9 +2,11 @@ import { CreditCard, Zap } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { userProfile } from "@/lib/dummy-data";
+import { getUserProfile } from "@/lib/supabase/server";
 
-export default function BillingPage() {
+export default async function BillingPage() {
+  const userProfile = await getUserProfile();
+
   return (
     <AppShell>
       <div className="mb-6">

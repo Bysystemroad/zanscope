@@ -79,19 +79,62 @@ export async function POST(request: Request) {
   };
   const creditCost = calculateLeadCreditCost(result.leads);
 
-  const { data: profile } = await supabase.from("users").select("credits").eq("id", user.id).maybeSingle();
+  const { data: profile, error: profileError } = await supabase
+    .from("users")
+    .select("credits")
+    .eq("id", user.id)
+    .maybeSingle();
 
-  if (!profile) {
-    await supabase.from("users").insert({
-      id: user.id,
-      email: user.email,
-      plan: "Free",
-      credits: 100
-    });
+  if (profileError) {
+    return NextResponse.json(
+      {
+        id: fallbackId,
+        saved: false,
+        creditCost,
+        remainingCredits: null,
+        leads: [],
+        source: result.source,
+        fallback: result.fallback,
+        places_api_used: result.places_api_used,
+        api_error: `Could not read user credits: ${profileError.message}`
+      },
+      { status: 500 }
+    );
   }
 
-  const { data: currentProfile } = await supabase.from("users").select("credits").eq("id", user.id).single();
-  const currentCredits = currentProfile?.credits ?? 0;
+  let currentCredits = profile?.credits ?? null;
+
+  if (currentCredits === null) {
+    const { data: createdProfile, error: createProfileError } = await supabase
+      .from("users")
+      .insert({
+        id: user.id,
+        email: user.email,
+        plan: "Free",
+        credits: 100
+      })
+      .select("credits")
+      .single();
+
+    if (createProfileError || !createdProfile) {
+      return NextResponse.json(
+        {
+          id: fallbackId,
+          saved: false,
+          creditCost,
+          remainingCredits: null,
+          leads: [],
+          source: result.source,
+          fallback: result.fallback,
+          places_api_used: result.places_api_used,
+          api_error: `Could not create user credit profile: ${createProfileError?.message || "No profile returned"}`
+        },
+        { status: 500 }
+      );
+    }
+
+    currentCredits = createdProfile.credits ?? 0;
+  }
 
   if (creditCost.total > currentCredits) {
     return NextResponse.json(

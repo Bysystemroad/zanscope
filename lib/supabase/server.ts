@@ -16,6 +16,13 @@ export type LeadListRecord = {
   updated_at: string;
 };
 
+export type UserProfileRecord = {
+  email: string;
+  plan: string;
+  credits: number;
+  demoMode: boolean;
+};
+
 type SupabaseLeadRow = Lead & {
   search_id?: string;
 };
@@ -39,6 +46,12 @@ type SupabaseLeadListRow = {
   updated_at: string;
 };
 
+type SupabaseUserRow = {
+  email: string | null;
+  plan: string | null;
+  credits: number | null;
+};
+
 export function isServerSupabaseConfigured() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 }
@@ -49,6 +62,67 @@ function demoHistory(): SearchHistoryRecord[] {
     lead_count: search.leads,
     credit_cost: search.credit_cost
   }));
+}
+
+export async function getUserProfile(): Promise<UserProfileRecord> {
+  if (!isServerSupabaseConfigured()) {
+    return {
+      email: "Demo workspace",
+      plan: "Demo",
+      credits: 0,
+      demoMode: true
+    };
+  }
+
+  const supabase = createServerComponentClient({ cookies });
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      email: "Demo workspace",
+      plan: "Demo",
+      credits: 0,
+      demoMode: true
+    };
+  }
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("email, plan, credits")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile) {
+    const row = profile as SupabaseUserRow;
+    return {
+      email: row.email || user.email || "",
+      plan: row.plan || "Free",
+      credits: row.credits ?? 0,
+      demoMode: false
+    };
+  }
+
+  const { data: createdProfile } = await supabase
+    .from("users")
+    .insert({
+      id: user.id,
+      email: user.email,
+      plan: "Free",
+      credits: 100
+    })
+    .select("email, plan, credits")
+    .maybeSingle();
+
+  const row = createdProfile as SupabaseUserRow | null;
+
+  return {
+    email: row?.email || user.email || "",
+    plan: row?.plan || "Free",
+    credits: row?.credits ?? 0,
+    demoMode: false
+  };
 }
 
 function demoLeadLists(): LeadListRecord[] {

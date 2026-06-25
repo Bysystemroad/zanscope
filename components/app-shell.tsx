@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BarChart3, Clock3, CreditCard, ListChecks, Search, Settings, Users } from "lucide-react";
 import { AccountMenu } from "@/components/account-menu";
 import { BrandLogo } from "@/components/brand-logo";
-import { userProfile } from "@/lib/dummy-data";
+import { getUserProfile } from "@/lib/supabase/server";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -14,7 +14,9 @@ const navItems = [
   { href: "/dashboard", label: "Settings", icon: Settings }
 ];
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export async function AppShell({ children }: { children: React.ReactNode }) {
+  const userProfile = await getUserProfile();
+
   return (
     <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[260px_1fr] lg:px-8">
       <aside className="glass-panel sticky top-24 h-fit rounded-xl p-3">
