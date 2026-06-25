@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Download, Send } from "lucide-react";
 import { AddToListButton } from "@/components/add-to-list-button";
 import { LeadScoreBadge } from "@/components/lead-score-badge";
@@ -60,11 +61,7 @@ export function ResultsTable({
     );
   }
 
-  const resultLabel = apiError
-    ? "Search failed"
-    : demoMode || fallback
-      ? "Demo mode"
-      : "Lead results";
+  const resultLabel = apiError ? "Search failed" : demoMode || fallback ? "Demo mode" : "Real search results";
 
   return (
     <div className="glass-panel overflow-hidden rounded-2xl">
@@ -74,6 +71,9 @@ export function ResultsTable({
           <p className="text-sm text-muted-foreground">
             {loading ? "Searching..." : `${leads.length} ${resultLabel}`}
           </p>
+          {(demoMode || fallback) && (
+            <p className="mt-1 text-sm text-muted-foreground">Create an account or log in to run real searches.</p>
+          )}
           <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
             {demoMode && <span>demo_mode: true</span>}
             {apiError && <span>Search error. Check server configuration.</span>}
@@ -86,6 +86,14 @@ export function ResultsTable({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {(demoMode || fallback) && (
+            <Link
+              href="/login"
+              className="inline-flex h-10 items-center justify-center rounded-md bg-white px-4 text-sm font-medium text-[#080f14] transition hover:bg-[#f1f4f6]"
+            >
+              Log in to run real searches
+            </Link>
+          )}
           <AddToListButton leadIds={selectedIds} disabled={loading || demoMode || fallback} />
           <Button type="button" variant="outline" onClick={exportCsv}>
             <Download className="h-4 w-4" />

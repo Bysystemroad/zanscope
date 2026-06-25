@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { searchApifyGoogle } from "@/lib/apify-search";
 import { calculateLeadCreditCost } from "@/lib/credits";
+import { leads as demoLeads } from "@/lib/dummy-data";
 import { discoverEmailsForLeads } from "@/lib/email-discovery";
 import { dedupeLeads } from "@/lib/lead-dedupe";
 import { sanitizeLeadsForUsers } from "@/lib/lead-public";
@@ -24,6 +25,32 @@ type CreditChargeResult = {
 export async function POST(request: Request) {
   const payload = (await request.json()) as SearchPayload;
   const fallbackId = crypto.randomUUID();
+  const demoResponse = {
+    id: fallbackId,
+    saved: false,
+    demoMode: true,
+    fallback: true,
+    source: "Demo",
+    places_api_used: false,
+    api_error: null,
+    leads: demoLeads,
+    creditCost: { total: 0, uniqueLeadCredits: 0, emailCredits: 0 },
+    remainingCredits: null
+  };
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return NextResponse.json(demoResponse);
+  }
+
+  const supabase = createRouteHandlerClient({ cookies });
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json(demoResponse);
+  }
+
   const [placesResult, webSearchResult] = await Promise.all([searchGooglePlaces(payload), searchApifyGoogle(payload)]);
   const discoveredLeads = [...placesResult.leads, ...webSearchResult.leads];
 
@@ -45,38 +72,12 @@ export async function POST(request: Request) {
   const finalLeads = sanitizeLeadsForUsers(sortLeadsByScore(scoreLeads(dedupeLeads(enrichedLeads))));
   const result = {
     ...placesResult,
+    demoMode: false,
     source: "ZanScope",
     api_error: discoveredLeads.length > 0 ? null : placesResult.api_error,
     leads: finalLeads
   };
   const creditCost = calculateLeadCreditCost(result.leads);
-
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return NextResponse.json({
-      id: fallbackId,
-      saved: false,
-      demoMode: true,
-      creditCost,
-      remainingCredits: null,
-      ...result
-    });
-  }
-
-  const supabase = createRouteHandlerClient({ cookies });
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({
-      id: fallbackId,
-      saved: false,
-      demoMode: true,
-      creditCost,
-      remainingCredits: null,
-      ...result
-    });
-  }
 
   const { data: profile } = await supabase.from("users").select("credits").eq("id", user.id).maybeSingle();
 

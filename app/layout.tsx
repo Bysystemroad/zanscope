@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AccountMenu } from "@/components/account-menu";
 import { BrandLogo } from "@/components/brand-logo";
 import "./globals.css";
 
@@ -23,12 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/dashboard/lists" className="hover:text-white">Lists</Link>
                 <Link href="/billing" className="hover:text-white">Billing</Link>
               </nav>
-              <Link
-                href="/login"
-                className="justify-self-end rounded-md border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 hover:shadow-[0_0_24px_rgba(255,255,255,0.14)]"
-              >
-                Login
-              </Link>
+              <AccountMenu />
             </div>
           </header>
           {children}

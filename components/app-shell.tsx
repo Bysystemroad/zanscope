@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BarChart3, Clock3, CreditCard, ListChecks, Search, Settings, Users } from "lucide-react";
+import { AccountMenu } from "@/components/account-menu";
 import { BrandLogo } from "@/components/brand-logo";
 import { userProfile } from "@/lib/dummy-data";
 
@@ -19,6 +20,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="glass-panel sticky top-24 h-fit rounded-xl p-3">
         <div className="mb-4 px-2 pt-2">
           <BrandLogo href="/dashboard" />
+        </div>
+        <div className="mb-3 rounded-lg border border-white/10 bg-white/6 p-3">
+          <AccountMenu />
         </div>
         <div className="mb-3 rounded-lg border border-white/10 bg-white/6 p-3">
           <div className="text-xs font-medium uppercase text-muted-foreground">Credits</div>

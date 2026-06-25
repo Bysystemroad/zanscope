@@ -1,12 +1,14 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase/client";
 
 export function AuthForm() {
+  const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [message, setMessage] = useState("Connect Supabase env vars to enable live auth.");
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,17 @@ export function AuthForm() {
         : await supabase.auth.signUp({ email, password });
 
     setLoading(false);
-    setMessage(response.error?.message || (mode === "login" ? "Signed in." : "Check your email to confirm signup."));
+    if (response.error) {
+      setMessage(response.error.message);
+      return;
+    }
+
+    setMessage(mode === "login" ? "Signed in. Redirecting..." : "Check your email to confirm signup.");
+
+    if (mode === "login") {
+      router.push("/dashboard");
+      router.refresh();
+    }
   }
 
   return (
