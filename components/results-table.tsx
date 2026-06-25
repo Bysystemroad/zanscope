@@ -76,7 +76,7 @@ export function ResultsTable({
           )}
           <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
             {demoMode && <span>demo_mode: true</span>}
-            {apiError && <span>Search error. Check server configuration.</span>}
+            {apiError && <span>Search error: {apiError}</span>}
             {typeof remainingCredits === "number" && <span>Remaining credits: {remainingCredits}</span>}
             {creditCost && (
               <span>
@@ -112,7 +112,7 @@ export function ResultsTable({
       )}
       {apiError && (
         <div className="border-b border-white/10 bg-white/10 px-4 py-3 text-sm font-medium text-white">
-          Lead discovery failed. Check server configuration and try again.
+          {apiError}
         </div>
       )}
       {loading && (
