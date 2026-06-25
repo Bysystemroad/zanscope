@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Lead } from "@/lib/dummy-data";
 import { ResultsTable } from "@/components/results-table";
 
@@ -9,9 +10,12 @@ type SearchPayload = {
   industry?: string;
   city?: string;
   country?: string;
+  requestId?: string;
 };
 
 type SearchResponse = {
+  id?: string;
+  saved?: boolean;
   leads?: Lead[];
   fallback?: boolean;
   demoMode?: boolean;
@@ -28,6 +32,34 @@ type SearchResponse = {
   source?: string;
 };
 
+const inFlightSearches = new Map<string, Promise<SearchResponse>>();
+
+function getStorageKey(payloadKey: string) {
+  return `zanscope:search-response:${payloadKey}`;
+}
+
+async function postSearch(payloadKey: string, searchPayload?: SearchPayload) {
+  const existingRequest = inFlightSearches.get(payloadKey);
+
+  if (existingRequest) {
+    return existingRequest;
+  }
+
+  const request = fetch("/api/searches", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(searchPayload || {})
+  }).then((response) => response.json() as Promise<SearchResponse>);
+
+  inFlightSearches.set(payloadKey, request);
+
+  try {
+    return await request;
+  } finally {
+    inFlightSearches.delete(payloadKey);
+  }
+}
+
 export function ResultsView({
   initialLeads,
   useSessionResults = true,
@@ -39,6 +71,7 @@ export function ResultsView({
   explicitDemo?: boolean;
   searchPayload?: SearchPayload;
 }) {
+  const router = useRouter();
   const [leads, setLeads] = useState(initialLeads);
   const [fallback, setFallback] = useState(explicitDemo);
   const [demoMode, setDemoMode] = useState(explicitDemo);
@@ -49,11 +82,38 @@ export function ResultsView({
   const [placesApiUsed, setPlacesApiUsed] = useState<boolean | undefined>(undefined);
   const [source, setSource] = useState<string | undefined>(explicitDemo ? "Demo" : undefined);
   const [loading, setLoading] = useState(Boolean(useSessionResults && !explicitDemo));
+  const hasRunRef = useRef<string | null>(null);
+  const payloadKey = useMemo(
+    () =>
+      JSON.stringify({
+        requestId: searchPayload?.requestId || "",
+        keyword: searchPayload?.keyword || "",
+        industry: searchPayload?.industry || "",
+        city: searchPayload?.city || "",
+        country: searchPayload?.country || ""
+      }),
+    [searchPayload?.city, searchPayload?.country, searchPayload?.industry, searchPayload?.keyword, searchPayload?.requestId]
+  );
 
   useEffect(() => {
     if (!useSessionResults || explicitDemo) return;
+    if (hasRunRef.current === payloadKey) return;
+
+    hasRunRef.current = payloadKey;
 
     let cancelled = false;
+
+    function applyResponse(parsed: SearchResponse) {
+      setLeads(parsed.leads || []);
+      setFallback(Boolean(parsed.fallback));
+      setDemoMode(Boolean(parsed.demoMode));
+      setRemainingCredits(parsed.remainingCredits ?? null);
+      setCreditCost(parsed.creditCost);
+      setUpgradeMessage(parsed.insufficientCredits ? parsed.upgradeMessage || "Upgrade or buy credits to save these leads." : "");
+      setApiError(parsed.api_error || "");
+      setPlacesApiUsed(parsed.places_api_used);
+      setSource(parsed.source);
+    }
 
     async function runSearch() {
       setLoading(true);
@@ -63,25 +123,18 @@ export function ResultsView({
       setDemoMode(false);
 
       try {
-        const response = await fetch("/api/searches", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(searchPayload || {})
-        });
-        const parsed = (await response.json()) as SearchResponse;
+        const cachedResponse = window.sessionStorage.getItem(getStorageKey(payloadKey));
+        const parsed = cachedResponse ? (JSON.parse(cachedResponse) as SearchResponse) : await postSearch(payloadKey, searchPayload);
+
+        window.sessionStorage.setItem(getStorageKey(payloadKey), JSON.stringify(parsed));
 
         if (cancelled) return;
 
-        setLeads(parsed.leads || []);
-        setFallback(Boolean(parsed.fallback));
-        setDemoMode(Boolean(parsed.demoMode));
-        setRemainingCredits(parsed.remainingCredits ?? null);
-        setCreditCost(parsed.creditCost);
-        setUpgradeMessage(parsed.insufficientCredits ? parsed.upgradeMessage || "Upgrade or buy credits to save these leads." : "");
-        setApiError(parsed.api_error || "");
-        setPlacesApiUsed(parsed.places_api_used);
-        setSource(parsed.source);
-        window.sessionStorage.setItem("zanscope:last-search-results", JSON.stringify(parsed));
+        applyResponse(parsed);
+
+        if (parsed.saved && parsed.id && !parsed.demoMode) {
+          router.replace(`/search/results?searchId=${encodeURIComponent(parsed.id)}`, { scroll: false });
+        }
       } catch (error) {
         if (cancelled) return;
         const message = error instanceof Error ? error.message : String(error);
@@ -90,7 +143,7 @@ export function ResultsView({
         setDemoMode(false);
         setApiError(`Search request failed: ${message}`);
         setPlacesApiUsed(false);
-        setSource("Google Places");
+        setSource("ZanScope");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -101,7 +154,7 @@ export function ResultsView({
     return () => {
       cancelled = true;
     };
-  }, [explicitDemo, searchPayload, useSessionResults]);
+  }, [explicitDemo, payloadKey, router, searchPayload, useSessionResults]);
 
   return (
     <ResultsTable

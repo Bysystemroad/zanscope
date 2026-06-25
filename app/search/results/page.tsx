@@ -13,6 +13,7 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   const city = typeof resolvedParams?.city === "string" ? resolvedParams.city : "";
   const country = typeof resolvedParams?.country === "string" ? resolvedParams.country : "";
   const industry = typeof resolvedParams?.industry === "string" ? resolvedParams.industry : "";
+  const requestId = typeof resolvedParams?.requestId === "string" ? resolvedParams.requestId : "";
   const searchId = typeof resolvedParams?.searchId === "string" ? resolvedParams.searchId : undefined;
   const demo = resolvedParams?.demo === "true";
   const savedResults = await getSavedSearchResults(searchId);
@@ -31,7 +32,7 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
         initialLeads={demo ? leads : searchId ? savedResults.leads : []}
         useSessionResults={!searchId && !demo}
         explicitDemo={demo}
-        searchPayload={{ keyword, industry, city, country }}
+        searchPayload={{ keyword, industry, city, country, requestId }}
       />
     </AppShell>
   );

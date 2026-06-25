@@ -20,6 +20,7 @@ export function SearchForm() {
         params.set(key, value);
       }
     });
+    params.set("requestId", crypto.randomUUID());
     setLoading(true);
     router.push(`/search/results?${params.toString()}`);
   }
