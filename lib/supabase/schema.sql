@@ -6,6 +6,30 @@ create table if not exists public.users (
   created_at timestamptz not null default now()
 );
 
+alter table public.users enable row level security;
+
+drop policy if exists "Users can read own profile" on public.users;
+create policy "Users can read own profile"
+on public.users
+for select
+to authenticated
+using (auth.uid() = id);
+
+drop policy if exists "Users can create own profile" on public.users;
+create policy "Users can create own profile"
+on public.users
+for insert
+to authenticated
+with check (auth.uid() = id);
+
+drop policy if exists "Users can update own profile" on public.users;
+create policy "Users can update own profile"
+on public.users
+for update
+to authenticated
+using (auth.uid() = id)
+with check (auth.uid() = id);
+
 create table if not exists public.searches (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.users(id) on delete cascade,

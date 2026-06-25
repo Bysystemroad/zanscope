@@ -32,6 +32,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <span className="text-2xl font-semibold text-white">{userProfile.credits}</span>
             <span className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-muted-foreground">{userProfile.plan}</span>
           </div>
+          {userProfile.error && <p className="mt-2 text-xs text-muted-foreground">{userProfile.error}</p>}
         </div>
         <nav className="space-y-1">
           {navItems.map((item) => (

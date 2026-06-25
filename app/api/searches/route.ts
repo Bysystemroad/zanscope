@@ -9,6 +9,7 @@ import { dedupeLeads } from "@/lib/lead-dedupe";
 import { sanitizeLeadsForUsers } from "@/lib/lead-public";
 import { scoreLeads, sortLeadsByScore } from "@/lib/lead-scoring";
 import { searchGooglePlaces } from "@/lib/google-places";
+import { ensureUserProfile } from "@/lib/supabase/profile";
 
 type SearchPayload = {
   keyword: string;
@@ -81,44 +82,20 @@ export async function POST(request: Request) {
     return NextResponse.json(demoResponse);
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from("users")
-    .select("credits")
-    .eq("id", user.id)
-    .maybeSingle();
+  let profile;
 
-  if (profileError) {
+  try {
+    profile = await ensureUserProfile(supabase, user);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     return errorResponse(500, {
       id: fallbackId,
       remainingCredits: null,
-      apiError: `Could not read user credits from users.credits: ${profileError.message}`
+      apiError: message
     });
   }
 
-  let currentCredits = profile?.credits ?? null;
-
-  if (currentCredits === null) {
-    const { data: createdProfile, error: createProfileError } = await supabase
-      .from("users")
-      .insert({
-        id: user.id,
-        email: user.email,
-        plan: "Free",
-        credits: 0
-      })
-      .select("credits")
-      .single();
-
-    if (createProfileError || !createdProfile) {
-      return errorResponse(500, {
-        id: fallbackId,
-        remainingCredits: null,
-        apiError: `Could not create missing user profile in users table: ${createProfileError?.message || "No profile returned"}`
-      });
-    }
-
-    currentCredits = createdProfile.credits ?? 0;
-  }
+  const currentCredits = profile.credits;
 
   if (currentCredits <= 0) {
     return errorResponse(402, {

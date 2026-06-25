@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Lead, leads as demoLeads, searches as demoSearches, SearchRecord } from "@/lib/dummy-data";
+import { ensureUserProfile } from "@/lib/supabase/profile";
 
 export type SearchHistoryRecord = SearchRecord & {
   lead_count: number;
@@ -21,6 +22,7 @@ export type UserProfileRecord = {
   plan: string;
   credits: number;
   demoMode: boolean;
+  error?: string;
 };
 
 type SupabaseLeadRow = Lead & {
@@ -44,12 +46,6 @@ type SupabaseLeadListRow = {
   description: string | null;
   created_at: string;
   updated_at: string;
-};
-
-type SupabaseUserRow = {
-  email: string | null;
-  plan: string | null;
-  credits: number | null;
 };
 
 export function isServerSupabaseConfigured() {
@@ -88,41 +84,24 @@ export async function getUserProfile(): Promise<UserProfileRecord> {
     };
   }
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("email, plan, credits")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profile) {
-    const row = profile as SupabaseUserRow;
+  try {
+    const profile = await ensureUserProfile(supabase, user);
     return {
-      email: row.email || user.email || "",
-      plan: row.plan || "Free",
-      credits: row.credits ?? 0,
+      email: profile.email,
+      plan: profile.plan,
+      credits: profile.credits,
       demoMode: false
     };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      email: user.email || "",
+      plan: "Profile error",
+      credits: 0,
+      demoMode: false,
+      error: message
+    };
   }
-
-  const { data: createdProfile } = await supabase
-    .from("users")
-    .insert({
-      id: user.id,
-      email: user.email,
-      plan: "Free",
-      credits: 100
-    })
-    .select("email, plan, credits")
-    .maybeSingle();
-
-  const row = createdProfile as SupabaseUserRow | null;
-
-  return {
-    email: row?.email || user.email || "",
-    plan: row?.plan || "Free",
-    credits: row?.credits ?? 0,
-    demoMode: false
-  };
 }
 
 function demoLeadLists(): LeadListRecord[] {
