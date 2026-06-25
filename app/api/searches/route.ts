@@ -158,6 +158,7 @@ export async function POST(request: Request) {
       country: payload.country,
       city: payload.city,
       industry: payload.industry,
+      lead_count: result.leads.length,
       credit_cost: creditCost.total,
       status: "complete"
     })
@@ -173,34 +174,10 @@ export async function POST(request: Request) {
     });
   }
 
-  const { data: chargeRows, error: chargeError } = await supabase.rpc("charge_user_credits", {
-    p_user_id: user.id,
-    p_amount: creditCost.total,
-    p_type: "search_debit",
-    p_description: `ZanScope search: ${payload.keyword || "Untitled search"}`
-  });
-
-  const charge = Array.isArray(chargeRows) ? (chargeRows[0] as CreditChargeResult | undefined) : undefined;
-
-  if (chargeError || !charge?.success) {
-    const remainingCredits = charge?.remaining_credits ?? currentCredits;
-    const message = chargeError
-      ? `Credit charge RPC failed: ${chargeError.message}`
-      : `You need ${creditCost.total} credits. Your current balance is ${remainingCredits}.`;
-
-    return errorResponse(chargeError ? 500 : 402, {
-      id: search.id,
-      creditCost,
-      remainingCredits,
-      insufficientCredits: !chargeError,
-      upgradeMessage: message,
-      apiError: message
-    });
-  }
-
   if (result.leads.length > 0) {
     const { data: insertedLeads, error: leadsInsertError } = await supabase.from("leads").insert(
       result.leads.map((lead) => ({
+        user_id: user.id,
         search_id: search.id,
         company_name: lead.company_name,
         website: lead.website,
@@ -209,6 +186,7 @@ export async function POST(request: Request) {
         address: lead.address,
         city: payload.city || lead.city,
         country: payload.country || lead.country,
+        industry: payload.industry,
         source: lead.source,
         scraper_status: lead.scraper_status,
         duplicate_count: lead.duplicate_count,
@@ -218,11 +196,12 @@ export async function POST(request: Request) {
     ).select("*");
 
     if (leadsInsertError) {
+      await supabase.from("searches").delete().eq("id", search.id).eq("user_id", user.id);
       return errorResponse(500, {
         id: search.id,
         creditCost,
-        remainingCredits: charge.remaining_credits,
-        apiError: `Credits were charged, but leads could not be saved: ${leadsInsertError.message}`
+        remainingCredits: currentCredits,
+        apiError: `Leads could not be saved, so credits were not charged: ${leadsInsertError.message}`
       });
     }
 
@@ -244,6 +223,33 @@ export async function POST(request: Request) {
         created_at: lead.created_at || new Date().toISOString()
       }));
     }
+  }
+
+  const { data: chargeRows, error: chargeError } = await supabase.rpc("charge_user_credits", {
+    p_user_id: user.id,
+    p_amount: creditCost.total,
+    p_type: "search_debit",
+    p_description: `ZanScope search: ${payload.keyword || "Untitled search"}`
+  });
+
+  const charge = Array.isArray(chargeRows) ? (chargeRows[0] as CreditChargeResult | undefined) : undefined;
+
+  if (chargeError || !charge?.success) {
+    const remainingCredits = charge?.remaining_credits ?? currentCredits;
+    const message = chargeError
+      ? `Credit charge RPC failed after saving search. Saved records were rolled back if possible: ${chargeError.message}`
+      : `You need ${creditCost.total} credits. Your current balance is ${remainingCredits}. Saved records were rolled back if possible.`;
+
+    await supabase.from("searches").delete().eq("id", search.id).eq("user_id", user.id);
+
+    return errorResponse(chargeError ? 500 : 402, {
+      id: search.id,
+      creditCost,
+      remainingCredits,
+      insufficientCredits: !chargeError,
+      upgradeMessage: message,
+      apiError: message
+    });
   }
 
   return NextResponse.json({
