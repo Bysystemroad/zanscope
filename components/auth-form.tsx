@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { BrandLogo } from "@/components/brand-logo";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase/client";
 
 export function AuthForm() {
@@ -46,6 +47,10 @@ export function AuthForm() {
 
   return (
     <div className="self-center rounded-3xl border border-white/10 bg-[#111923]/75 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38),0_0_50px_rgba(90,155,205,0.08)] backdrop-blur-xl sm:p-7">
+      <div className="mb-6">
+        <BrandLogo href="/" className="h-14" />
+      </div>
+
       <div className="mb-7">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#b8c7d4]">Secure authentication</p>
         <h2 className="mt-3 text-2xl font-semibold tracking-normal text-white">
@@ -53,8 +58,8 @@ export function AuthForm() {
         </h2>
         <p className="mt-3 text-sm leading-6 text-[#a7b0bb]">
           {mode === "login"
-            ? "Sign in to access your lead database, saved searches, lead lists, exports, and credits."
-            : "Find high-quality B2B companies, enrich contact information, organize lead lists, and export clean prospect data."}
+            ? "Access your workspace, saved leads, exports, lead lists and search history."
+            : "Discover high-quality B2B companies, organize your prospects, and build better outbound campaigns."}
         </p>
       </div>
 

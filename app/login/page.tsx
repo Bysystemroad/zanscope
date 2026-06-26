@@ -15,7 +15,7 @@ export default function LoginPage() {
             Welcome back to ZanScope
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-[#a7b0bb]">
-            Sign in to access your lead database, saved searches, lead lists, exports, and credits.
+            Access your workspace, saved leads, exports, lead lists and search history.
           </p>
           <div className="mt-10 grid max-w-2xl gap-4 sm:grid-cols-3">
             {["Lead database", "Saved searches", "Clean exports"].map((item) => (
