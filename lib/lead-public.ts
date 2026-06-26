@@ -10,7 +10,7 @@ export function sanitizeLeadsForUsers(leads: Lead[]): Lead[] {
     address: lead.address,
     city: lead.city,
     country: lead.country,
-    source: "ZanScope",
+    source: "Zanscope",
     scraper_status: lead.scraper_status,
     duplicate_count: lead.duplicate_count,
     lead_score: lead.lead_score,

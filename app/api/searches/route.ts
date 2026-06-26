@@ -70,7 +70,7 @@ function errorResponse(
       creditCost: payload.creditCost || { total: 0, uniqueLeadCredits: 0, emailCredits: 0 },
       remainingCredits: payload.remainingCredits,
       leads: [],
-      source: "ZanScope",
+      source: "Zanscope",
       fallback: false,
       places_api_used: false,
       api_error: publicSearchError(payload.apiError)
@@ -159,7 +159,7 @@ export async function POST(request: Request) {
   const result = {
     ...placesResult,
     demoMode: false,
-    source: "ZanScope",
+    source: "Zanscope",
     api_error: discoveredLeads.length > 0 ? null : publicSearchError(placesResult.api_error),
     leads: finalLeads
   };
@@ -241,7 +241,7 @@ export async function POST(request: Request) {
         address: lead.address || "",
         city: lead.city || "",
         country: lead.country || "",
-        source: "ZanScope",
+        source: "Zanscope",
         scraper_status: lead.scraper_status || "pending",
         duplicate_count: lead.duplicate_count || 1,
         lead_score: lead.lead_score || 0,
@@ -255,7 +255,7 @@ export async function POST(request: Request) {
     p_user_id: user.id,
     p_amount: creditCost.total,
     p_type: "search_debit",
-    p_description: `ZanScope search: ${payload.keyword || "Untitled search"}`
+    p_description: `Zanscope search: ${payload.keyword || "Untitled search"}`
   });
 
   const charge = Array.isArray(chargeRows) ? (chargeRows[0] as CreditChargeResult | undefined) : undefined;

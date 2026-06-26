@@ -12,7 +12,7 @@ export default function LoginPage() {
             Secure workspace access
           </div>
           <h1 className="max-w-2xl text-4xl font-semibold tracking-normal text-white sm:text-5xl">
-            Welcome back to ZanScope
+            Welcome back to Zanscope
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-[#a7b0bb]">
             Access your workspace, saved leads, exports, lead lists and search history.

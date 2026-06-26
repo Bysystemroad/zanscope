@@ -5,7 +5,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ZanScope | B2B Lead Discovery",
+  title: "Zanscope | B2B Lead Discovery",
   description: "Discover company leads by keyword, location, and industry."
 };
 

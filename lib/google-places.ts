@@ -27,7 +27,7 @@ export type PlacesSearchPayload = {
 
 export type PlacesSearchResult = {
   leads: Lead[];
-  source: "ZanScope Intelligence";
+  source: "Zanscope Intelligence";
   fallback: boolean;
   places_api_used: boolean;
   api_error: string | null;
@@ -36,7 +36,7 @@ export type PlacesSearchResult = {
 function errorResult(apiError: string, placesApiUsed: boolean): PlacesSearchResult {
   return {
     leads: [],
-    source: "ZanScope Intelligence",
+    source: "Zanscope Intelligence",
     fallback: false,
     places_api_used: placesApiUsed,
     api_error: apiError
@@ -131,7 +131,7 @@ export async function searchGooglePlaces(payload: Partial<PlacesSearchPayload>):
       address: place.formattedAddress || "",
       city,
       country,
-      source: "ZanScope Intelligence",
+      source: "Zanscope Intelligence",
       scraper_status: "pending",
       duplicate_count: 1,
       lead_score: 0,
@@ -140,7 +140,7 @@ export async function searchGooglePlaces(payload: Partial<PlacesSearchPayload>):
       internal_source_count: 1,
       created_at: new Date().toISOString()
     })),
-    source: "ZanScope Intelligence",
+    source: "Zanscope Intelligence",
     fallback: false,
     places_api_used: true,
     api_error: null

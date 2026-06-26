@@ -27,7 +27,7 @@ const fadeUp = {
 
 const howItWorks = [
   ["Search market", "Enter keyword, city, country, and industry to define the exact market segment."],
-  ["Discover companies", "ZanScope Intelligence identifies relevant businesses with websites, addresses, and phone signals."],
+  ["Discover companies", "Zanscope Intelligence identifies relevant businesses with websites, addresses, and phone signals."],
   ["Extract emails", "Automated contact enrichment checks websites and contact pages for business email addresses."],
   ["Export leads", "Deduplicated lists stay clean and ready for CSV export or Zantevo handoff."]
 ];
@@ -97,7 +97,7 @@ export default function LandingPage() {
               Find B2B leads before your competitors do.
             </motion.h1>
             <motion.p variants={fadeUp} className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-              ZanScope discovers companies, websites, phone numbers, emails, addresses, removes duplicates, and exports clean lead lists to CSV.
+              Zanscope discovers companies, websites, phone numbers, emails, addresses, removes duplicates, and exports clean lead lists to CSV.
             </motion.p>
             <motion.div variants={fadeUp} className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link href="/search/new">
@@ -160,7 +160,7 @@ export default function LandingPage() {
             <div className="flex items-center justify-between border-b border-white/8 p-4">
               <div>
                 <div className="text-sm font-semibold text-white">Austin software companies</div>
-                <div className="text-xs text-muted-foreground">ZanScope Intelligence + contact enrichment</div>
+                <div className="text-xs text-muted-foreground">Zanscope Intelligence + contact enrichment</div>
               </div>
               <Button variant="outline">
                 <Download className="h-4 w-4" />

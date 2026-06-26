@@ -33,7 +33,7 @@ export type ApifySearchResult = {
 };
 
 const DEFAULT_ACTOR_ID = "apify/google-search-scraper";
-const PUBLIC_SOURCE_LABEL = "ZanScope Intelligence";
+const PUBLIC_SOURCE_LABEL = "Zanscope Intelligence";
 
 function actorIdForUrl(actorId: string) {
   return actorId.trim().replace("/", "~");

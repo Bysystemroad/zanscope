@@ -143,7 +143,7 @@ export function ResultsView({
         setDemoMode(false);
         setApiError(`Search request failed: ${message}`);
         setPlacesApiUsed(false);
-        setSource("ZanScope");
+        setSource("Zanscope");
       } finally {
         if (!cancelled) setLoading(false);
       }

@@ -6,7 +6,7 @@ export function BrandLogo({ className, href = "/" }: { className?: string; href?
     <span className={cn("flex items-center", className)}>
       <img
         src="/zanscope-logo.png"
-        alt="ZanScope"
+        alt="Zanscope"
         className="h-[60px] w-auto object-contain drop-shadow-[0_0_18px_rgba(255,255,255,0.18)]"
       />
     </span>

@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ...result,
-        source: "ZanScope",
+        source: "Zanscope",
         api_error: publicSearchError(result.api_error)
       },
       { status: result.places_api_used ? 502 : 500 }
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ...result,
-    source: "ZanScope",
+    source: "Zanscope",
     api_error: discoveredLeads.length > 0 ? null : publicSearchError(result.api_error),
     leads
   });

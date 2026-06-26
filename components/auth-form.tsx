@@ -54,7 +54,7 @@ export function AuthForm() {
       <div className="mb-7">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#b8c7d4]">Secure authentication</p>
         <h2 className="mt-3 text-2xl font-semibold tracking-normal text-white">
-          {mode === "login" ? "Welcome back to ZanScope" : "Create your ZanScope account"}
+          {mode === "login" ? "Welcome back to Zanscope" : "Create your Zanscope account"}
         </h2>
         <p className="mt-3 text-sm leading-6 text-[#a7b0bb]">
           {mode === "login"
