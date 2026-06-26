@@ -71,18 +71,20 @@ export function AccountMenu() {
   const initial = account.email.slice(0, 1).toUpperCase();
 
   return (
-    <div className="flex items-center gap-3 justify-self-end">
-      <div className="hidden text-right sm:block">
+    <div className="flex max-w-full flex-wrap items-center gap-3 justify-self-end overflow-hidden">
+      <div className="min-w-0 flex-1 text-left sm:block">
         <div className="text-xs text-muted-foreground">Signed in</div>
-        <div className="max-w-[190px] truncate text-sm font-medium text-white">{account.email}</div>
+        <div className="max-w-full truncate text-sm font-medium text-white" title={account.email}>
+          {account.email}
+        </div>
       </div>
-      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-sm font-semibold text-white">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/10 text-sm font-semibold text-white">
         {initial}
       </div>
       <button
         type="button"
         onClick={logout}
-        className="inline-flex h-10 items-center gap-2 rounded-md border border-white/15 bg-white/5 px-3 text-sm font-medium text-white transition hover:bg-white/10"
+        className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md border border-white/15 bg-white/5 px-3 text-sm font-medium text-white transition hover:bg-white/10"
       >
         <LogOut className="h-4 w-4" />
         <span className="hidden sm:inline">Logout</span>
