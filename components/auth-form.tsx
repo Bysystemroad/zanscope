@@ -31,18 +31,27 @@ export function AuthForm() {
         ? await supabase.auth.signInWithPassword({ email, password })
         : await supabase.auth.signUp({ email, password });
 
-    setLoading(false);
     if (response.error) {
+      setLoading(false);
       setMessage(response.error.message);
       return;
     }
 
-    setMessage(mode === "login" ? "Signed in. Redirecting..." : "Check your email to confirm your account.");
-
     if (mode === "login") {
-      router.push("/dashboard");
-      router.refresh();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError || !sessionData.session) {
+        setLoading(false);
+        setMessage(sessionError?.message || "Login succeeded, but the session could not be confirmed. Please try again.");
+        return;
+      }
+
+      router.replace("/dashboard");
+      return;
     }
+
+    setLoading(false);
+    setMessage("Check your email to confirm your account.");
   }
 
   return (

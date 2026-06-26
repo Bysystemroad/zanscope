@@ -49,8 +49,8 @@ export function AccountMenu() {
     if (!supabase) return;
     await supabase.auth.signOut();
     setAccount(null);
+    router.replace("/login");
     router.refresh();
-    router.push("/");
   }
 
   if (loading) {
