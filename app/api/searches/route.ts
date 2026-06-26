@@ -23,6 +23,32 @@ type CreditChargeResult = {
   remaining_credits: number;
 };
 
+function publicSearchError(message?: string | null) {
+  if (!message) return "Search service temporarily unavailable.";
+
+  const lowerMessage = message.toLowerCase();
+
+  if (lowerMessage.includes("quota")) {
+    return "Search capacity is temporarily limited. Please try again shortly.";
+  }
+
+  if (
+    lowerMessage.includes("api") ||
+    lowerMessage.includes("google") ||
+    lowerMessage.includes("places") ||
+    lowerMessage.includes("apify") ||
+    lowerMessage.includes("token") ||
+    lowerMessage.includes("key") ||
+    lowerMessage.includes("env") ||
+    lowerMessage.includes("internal discovery engine") ||
+    lowerMessage.includes("internal web search")
+  ) {
+    return "Search service temporarily unavailable. Please try again.";
+  }
+
+  return message;
+}
+
 function errorResponse(
   status: number,
   payload: {
@@ -47,7 +73,7 @@ function errorResponse(
       source: "ZanScope",
       fallback: false,
       places_api_used: false,
-      api_error: payload.apiError
+      api_error: publicSearchError(payload.apiError)
     },
     { status }
   );
@@ -115,7 +141,7 @@ export async function POST(request: Request) {
     return errorResponse(placesResult.places_api_used ? 502 : 500, {
       id: fallbackId,
       remainingCredits: currentCredits,
-      apiError: discoveryErrors.join(" | ") || placesResult.api_error
+      apiError: publicSearchError(discoveryErrors.join(" | ") || placesResult.api_error)
     });
   }
 
@@ -123,7 +149,7 @@ export async function POST(request: Request) {
     return errorResponse(502, {
       id: fallbackId,
       remainingCredits: currentCredits,
-      apiError: webSearchResult.error
+      apiError: publicSearchError(webSearchResult.error)
     });
   }
 
@@ -134,7 +160,7 @@ export async function POST(request: Request) {
     ...placesResult,
     demoMode: false,
     source: "ZanScope",
-    api_error: discoveredLeads.length > 0 ? null : placesResult.api_error,
+    api_error: discoveredLeads.length > 0 ? null : publicSearchError(placesResult.api_error),
     leads: finalLeads
   };
   const creditCost = calculateLeadCreditCost(result.leads);

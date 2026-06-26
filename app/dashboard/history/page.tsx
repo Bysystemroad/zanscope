@@ -11,7 +11,7 @@ export default async function SearchHistoryPage() {
       <div className="mb-6 flex flex-col gap-2">
         <h1 className="text-3xl font-semibold tracking-normal text-white">Search history</h1>
         <p className="text-muted-foreground">
-          {demoMode ? "Demo searches are shown until Supabase auth is connected." : "Saved searches from your workspace."}
+          {demoMode ? "Preview searches are shown until you sign in." : "Saved searches from your workspace."}
         </p>
       </div>
       <div className="glass-panel overflow-hidden rounded-2xl">

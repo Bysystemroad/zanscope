@@ -9,6 +9,32 @@ import { sanitizeLeadsForUsers } from "@/lib/lead-public";
 import { scoreLeads, sortLeadsByScore } from "@/lib/lead-scoring";
 import { searchGooglePlaces } from "@/lib/google-places";
 
+function publicSearchError(message?: string | null) {
+  if (!message) return "Search service temporarily unavailable.";
+
+  const lowerMessage = message.toLowerCase();
+
+  if (lowerMessage.includes("quota")) {
+    return "Search capacity is temporarily limited. Please try again shortly.";
+  }
+
+  if (
+    lowerMessage.includes("api") ||
+    lowerMessage.includes("google") ||
+    lowerMessage.includes("places") ||
+    lowerMessage.includes("apify") ||
+    lowerMessage.includes("token") ||
+    lowerMessage.includes("key") ||
+    lowerMessage.includes("env") ||
+    lowerMessage.includes("internal discovery engine") ||
+    lowerMessage.includes("internal web search")
+  ) {
+    return "Search service temporarily unavailable. Please try again.";
+  }
+
+  return message;
+}
+
 export async function POST(request: Request) {
   const payload = await request.json();
   const demoResponse = {
@@ -37,7 +63,14 @@ export async function POST(request: Request) {
   const discoveredLeads = [...result.leads, ...webSearchResult.leads];
 
   if (result.api_error && discoveredLeads.length === 0) {
-    return NextResponse.json(result, { status: result.places_api_used ? 502 : 500 });
+    return NextResponse.json(
+      {
+        ...result,
+        source: "ZanScope",
+        api_error: publicSearchError(result.api_error)
+      },
+      { status: result.places_api_used ? 502 : 500 }
+    );
   }
 
   const mergedLeads = dedupeLeads(discoveredLeads);
@@ -47,7 +80,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ...result,
     source: "ZanScope",
-    api_error: discoveredLeads.length > 0 ? null : result.api_error,
+    api_error: discoveredLeads.length > 0 ? null : publicSearchError(result.api_error),
     leads
   });
 }

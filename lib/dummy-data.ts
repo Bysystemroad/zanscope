@@ -82,7 +82,7 @@ export const leads: Lead[] = [
     address: "110 Congress Ave, Austin, TX",
     city: "Austin",
     country: "United States",
-    source: "Dummy directory",
+    source: "ZanScope Preview",
     scraper_status: "found",
     duplicate_count: 1,
     lead_score: 90,
@@ -98,7 +98,7 @@ export const leads: Lead[] = [
     address: "204 W 4th St, Austin, TX",
     city: "Austin",
     country: "United States",
-    source: "Dummy directory",
+    source: "ZanScope Preview",
     scraper_status: "found",
     duplicate_count: 1,
     lead_score: 90,
@@ -114,7 +114,7 @@ export const leads: Lead[] = [
     address: "515 Congress Ave, Austin, TX",
     city: "Austin",
     country: "United States",
-    source: "Dummy directory",
+    source: "ZanScope Preview",
     scraper_status: "found",
     duplicate_count: 1,
     lead_score: 90,
@@ -130,7 +130,7 @@ export const leads: Lead[] = [
     address: "301 Brazos St, Austin, TX",
     city: "Austin",
     country: "United States",
-    source: "Dummy directory",
+    source: "ZanScope Preview",
     scraper_status: "found",
     duplicate_count: 1,
     lead_score: 90,
@@ -146,7 +146,7 @@ export const leads: Lead[] = [
     address: "600 Congress Ave, Austin, TX",
     city: "Austin",
     country: "United States",
-    source: "Dummy directory",
+    source: "ZanScope Preview",
     scraper_status: "found",
     duplicate_count: 1,
     lead_score: 90,
@@ -156,28 +156,28 @@ export const leads: Lead[] = [
 ];
 
 export function leadsToCsv(rows: Lead[]) {
-  const headers = [
-    "company_name",
-    "website",
-    "email",
-    "phone",
-    "address",
-    "city",
-    "country",
-    "scraper_status",
-    "duplicate_count",
-    "lead_score",
-    "lead_quality",
-    "created_at"
+  const columns: Array<[string, keyof Lead]> = [
+    ["company_name", "company_name"],
+    ["website", "website"],
+    ["email", "email"],
+    ["phone", "phone"],
+    ["address", "address"],
+    ["city", "city"],
+    ["country", "country"],
+    ["enrichment_status", "scraper_status"],
+    ["duplicate_count", "duplicate_count"],
+    ["lead_score", "lead_score"],
+    ["lead_quality", "lead_quality"],
+    ["created_at", "created_at"]
   ];
   const escaped = rows.map((row) =>
-    headers
-      .map((key) => {
-        const value = row[key as keyof Lead];
+    columns
+      .map(([, key]) => {
+        const value = row[key];
         return `"${String(value).replaceAll('"', '""')}"`;
       })
       .join(",")
   );
 
-  return [headers.join(","), ...escaped].join("\n");
+  return [columns.map(([header]) => header).join(","), ...escaped].join("\n");
 }

@@ -20,7 +20,7 @@ export default async function LeadListDetailPage({ params }: { params: Promise<{
         </Link>
         <h1 className="text-3xl font-semibold tracking-normal text-white">{list.name}</h1>
         <p className="text-muted-foreground">
-          {demoMode ? "Demo list leads are shown until Supabase auth is connected." : list.description || "Saved leads in this list."}
+          {demoMode ? "Preview list leads are shown until you sign in." : list.description || "Saved leads in this list."}
         </p>
       </div>
       <LeadListDetail listId={list.id} initialLeads={leads} />

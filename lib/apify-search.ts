@@ -33,7 +33,7 @@ export type ApifySearchResult = {
 };
 
 const DEFAULT_ACTOR_ID = "apify/google-search-scraper";
-const PUBLIC_SOURCE_LABEL = "Verified web";
+const PUBLIC_SOURCE_LABEL = "ZanScope Intelligence";
 
 function actorIdForUrl(actorId: string) {
   return actorId.trim().replace("/", "~");
@@ -112,7 +112,7 @@ function toLead(item: WebSearchItem, index: number, payload: SearchPayload): Lea
     lead_score: 0,
     lead_quality: "Low Quality",
     description,
-    internal_sources: ["Internal web search"],
+    internal_sources: ["Internal discovery engine"],
     internal_source_count: 1,
     created_at: new Date().toISOString()
   };
@@ -148,12 +148,12 @@ export async function searchApifyGoogle(payload: SearchPayload): Promise<ApifySe
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return { leads: [], used: true, error: `Internal web search request failed: ${message}` };
+    return { leads: [], used: true, error: `Internal discovery engine request failed: ${message}` };
   }
 
   if (!response.ok) {
     const message = await response.text().catch(() => response.statusText);
-    return { leads: [], used: true, error: `Internal web search failed (${response.status}): ${message}` };
+    return { leads: [], used: true, error: `Internal discovery engine failed (${response.status}): ${message}` };
   }
 
   try {
@@ -166,6 +166,6 @@ export async function searchApifyGoogle(payload: SearchPayload): Promise<ApifySe
     return { leads, used: true, error: null };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return { leads: [], used: true, error: `Internal web search returned invalid JSON: ${message}` };
+    return { leads: [], used: true, error: `Internal discovery engine returned invalid JSON: ${message}` };
   }
 }

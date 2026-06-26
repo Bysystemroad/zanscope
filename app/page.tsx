@@ -27,15 +27,15 @@ const fadeUp = {
 
 const howItWorks = [
   ["Search market", "Enter keyword, city, country, and industry to define the exact market segment."],
-  ["Discover companies", "Google Places returns real businesses with websites, addresses, and phone signals."],
-  ["Extract emails", "ZanScope visits websites and contact pages to find business email addresses."],
+  ["Discover companies", "ZanScope Intelligence identifies relevant businesses with websites, addresses, and phone signals."],
+  ["Extract emails", "Automated contact enrichment checks websites and contact pages for business email addresses."],
   ["Export leads", "Deduplicated lists stay clean and ready for CSV export or Zantevo handoff."]
 ];
 
 const features: Array<[string, LucideIcon]> = [
-  ["Google Places lead discovery", Database],
-  ["Website email discovery", MailSearch],
-  ["Deduplication", ShieldCheck],
+  ["Verified business lead discovery", Database],
+  ["Automated contact enrichment", MailSearch],
+  ["Advanced company matching", ShieldCheck],
   ["CSV export", Download],
   ["Credit-based usage", Zap],
   ["Send to Zantevo", Sparkles]
@@ -153,14 +153,14 @@ export default function LandingPage() {
         <div>
           <p className="text-sm font-semibold uppercase text-[#d8e0e8]">Product preview</p>
           <h2 className="mt-3 text-4xl font-semibold text-white">From search to export in one control center.</h2>
-          <p className="mt-4 leading-7 text-muted-foreground">Review sources, scraper status, duplicates, credit usage, and CSV output from one premium data workspace.</p>
+          <p className="mt-4 leading-7 text-muted-foreground">Review enrichment status, duplicates, credit usage, and CSV output from one premium data workspace.</p>
         </div>
         <div className="premium-border rounded-3xl">
           <div className="glass-panel overflow-hidden rounded-3xl">
             <div className="flex items-center justify-between border-b border-white/8 p-4">
               <div>
                 <div className="text-sm font-semibold text-white">Austin software companies</div>
-                <div className="text-xs text-muted-foreground">Google Places + email discovery</div>
+                <div className="text-xs text-muted-foreground">ZanScope Intelligence + contact enrichment</div>
               </div>
               <Button variant="outline">
                 <Download className="h-4 w-4" />

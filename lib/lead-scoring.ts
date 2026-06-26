@@ -96,9 +96,8 @@ export function calculateLeadScore(
   if (hasEmail) score += 30;
   if (hasPhone) score += 12;
   if (hasAddress) score += 8;
-  if (source === "google places") score += 10;
-  else if (source.includes("google places")) score += 10;
-  else if (source && source !== "dummy directory") score += 5;
+  if (source.includes("zanscope intelligence")) score += 10;
+  else if (source && source !== "zanscope preview") score += 5;
   if (lead.scraper_status === "found") score += 10;
   else if (lead.scraper_status === "failed") score -= 5;
 

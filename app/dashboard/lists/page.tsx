@@ -10,7 +10,7 @@ export default async function LeadListsPage() {
       <div className="mb-6 flex flex-col gap-2">
         <h1 className="text-3xl font-semibold tracking-normal text-white">Lead lists</h1>
         <p className="text-muted-foreground">
-          {demoMode ? "Demo lists are shown until Supabase auth is connected." : "Organize saved leads into focused prospect lists."}
+          {demoMode ? "Preview lists are shown until you sign in." : "Organize saved leads into focused prospect lists."}
         </p>
       </div>
       <LeadListsManager initialLists={lists} />

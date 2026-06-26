@@ -25,6 +25,13 @@ type ResultsTableProps = {
   loading?: boolean;
 };
 
+function enrichmentLabel(status: Lead["scraper_status"]) {
+  if (status === "found") return "Enriched";
+  if (status === "not_found") return "No contact found";
+  if (status === "failed") return "Needs review";
+  return "Pending";
+}
+
 export function ResultsTable({
   leads,
   fallback = false,
@@ -61,7 +68,8 @@ export function ResultsTable({
     );
   }
 
-  const resultLabel = apiError ? "Search failed" : demoMode || fallback ? "Demo mode" : "Real search results";
+  const publicApiError = apiError ? "Search service temporarily unavailable. Please try again." : "";
+  const resultLabel = apiError ? "Search unavailable" : demoMode || fallback ? "Demo preview" : "Verified business leads";
 
   return (
     <div className="glass-panel overflow-hidden rounded-2xl">
@@ -75,8 +83,8 @@ export function ResultsTable({
             <p className="mt-1 text-sm text-muted-foreground">Create an account or log in to run real searches.</p>
           )}
           <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
-            {demoMode && <span>demo_mode: true</span>}
-            {apiError && <span>Search error: {apiError}</span>}
+            {(demoMode || fallback) && <span>Preview workspace</span>}
+            {publicApiError && <span>{publicApiError}</span>}
             {typeof remainingCredits === "number" && <span>Remaining credits: {remainingCredits}</span>}
             {creditCost && (
               <span>
@@ -117,7 +125,7 @@ export function ResultsTable({
       )}
       {loading && (
         <div className="border-b border-white/10 px-4 py-8 text-sm text-muted-foreground">
-          Contacting `/api/searches` and preparing clean lead results...
+          Scanning business intelligence sources and preparing clean lead results...
         </div>
       )}
       <div className="overflow-x-auto">
@@ -136,7 +144,7 @@ export function ResultsTable({
               <th className="px-4 py-3">Phone</th>
               <th className="px-4 py-3">Address</th>
               <th className="px-4 py-3">Location</th>
-              <th className="px-4 py-3">Scraper</th>
+              <th className="px-4 py-3">Enrichment</th>
               <th className="px-4 py-3">Duplicates</th>
             </tr>
           </thead>
@@ -164,7 +172,7 @@ export function ResultsTable({
                 </td>
                 <td className="px-4 py-3">
                   <span className="rounded-md border border-white/10 bg-white/6 px-2 py-1 text-xs font-medium text-white">
-                    {lead.scraper_status}
+                    {enrichmentLabel(lead.scraper_status)}
                   </span>
                 </td>
                 <td className="px-4 py-3">{lead.duplicate_count}</td>

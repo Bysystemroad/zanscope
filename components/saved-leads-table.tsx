@@ -11,6 +11,13 @@ function uniqueValues(leads: Lead[], key: keyof Pick<Lead, "country" | "city" | 
   return Array.from(new Set(leads.map((lead) => String(lead[key] || "")).filter(Boolean))).sort();
 }
 
+function enrichmentLabel(status: Lead["scraper_status"]) {
+  if (status === "found") return "Enriched";
+  if (status === "not_found") return "No contact found";
+  if (status === "failed") return "Needs review";
+  return "Pending";
+}
+
 export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
@@ -90,10 +97,10 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
           <option value="no">No email</option>
         </select>
         <select className={selectClass} value={scraperStatus} onChange={(event) => setScraperStatus(event.target.value)}>
-          <option value="">All scraper statuses</option>
+          <option value="">All enrichment statuses</option>
           {uniqueValues(leads, "scraper_status").map((value) => (
             <option key={value} value={value}>
-              {value}
+              {enrichmentLabel(value as Lead["scraper_status"])}
             </option>
           ))}
         </select>
@@ -130,7 +137,7 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Phone</th>
               <th className="px-4 py-3">Location</th>
-              <th className="px-4 py-3">Scraper</th>
+              <th className="px-4 py-3">Enrichment</th>
               <th className="px-4 py-3">Duplicates</th>
             </tr>
           </thead>
@@ -155,7 +162,7 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
                 <td className="px-4 py-3">
                   {lead.city}, {lead.country}
                 </td>
-                <td className="px-4 py-3">{lead.scraper_status}</td>
+                <td className="px-4 py-3">{enrichmentLabel(lead.scraper_status)}</td>
                 <td className="px-4 py-3">{lead.duplicate_count}</td>
               </tr>
             ))}
