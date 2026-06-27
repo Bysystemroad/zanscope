@@ -13,11 +13,7 @@ async function getUser() {
 async function ownedLeadIds(supabase: ReturnType<typeof createRouteHandlerClient>, userId: string, leadIds: string[]) {
   if (leadIds.length === 0) return [];
 
-  const { data: searches } = await supabase.from("searches").select("id").eq("user_id", userId);
-  const searchIds = (searches || []).map((search) => search.id);
-  if (searchIds.length === 0) return [];
-
-  const { data: leads } = await supabase.from("leads").select("id").in("id", leadIds).in("search_id", searchIds);
+  const { data: leads } = await supabase.from("leads").select("id").eq("user_id", userId).in("id", leadIds);
   return (leads || []).map((lead) => lead.id);
 }
 

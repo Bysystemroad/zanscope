@@ -215,14 +215,7 @@ export async function getSavedLeads() {
     return { demoMode: true, leads: sortLeadsByScore(demoLeads) };
   }
 
-  const { data: userSearches } = await supabase.from("searches").select("id").eq("user_id", user.id);
-  const searchIds = (userSearches || []).map((search) => search.id);
-
-  if (searchIds.length === 0) {
-    return { demoMode: false, leads: [] };
-  }
-
-  const { data: rows } = await supabase.from("leads").select("*").in("search_id", searchIds).order("created_at", {
+  const { data: rows } = await supabase.from("leads").select("*").eq("user_id", user.id).order("created_at", {
     ascending: false
   });
 

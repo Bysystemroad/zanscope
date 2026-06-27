@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Clock3, CreditCard, ListChecks, Search, Settings, Users } from "lucide-react";
+import { BarChart3, Clock3, CreditCard, FileUp, ListChecks, Search, Settings, Users } from "lucide-react";
 import { AccountMenu } from "@/components/account-menu";
 import { BrandLogo } from "@/components/brand-logo";
 import { getUserProfile } from "@/lib/supabase/server";
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/dashboard/history", label: "History", icon: Clock3 },
   { href: "/dashboard/leads", label: "Saved Leads", icon: Users },
   { href: "/dashboard/lists", label: "Lists", icon: ListChecks },
+  { href: "/dashboard/enrich", label: "Enrich List", icon: FileUp },
   { href: "/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard", label: "Settings", icon: Settings }
 ];
