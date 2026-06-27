@@ -56,16 +56,16 @@ export function LeadListDetail({ listId, initialLeads }: { listId: string; initi
         <div className="text-sm text-muted-foreground">
           {leads.length} leads / {selectedLeads.length} selected
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={exportCsv}>
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+          <Button type="button" variant="outline" className="shrink-0" onClick={exportCsv}>
             <Download className="h-4 w-4" />
-            CSV
+            Export CSV
           </Button>
-          <Button type="button" variant="outline" onClick={exportExcel}>
+          <Button type="button" variant="outline" className="shrink-0" onClick={exportExcel}>
             <Download className="h-4 w-4" />
-            Excel
+            Export Excel
           </Button>
-          <Button type="button" variant="secondary" disabled={selectedIds.length === 0} onClick={removeSelected}>
+          <Button type="button" variant="secondary" className="shrink-0" disabled={selectedIds.length === 0} onClick={removeSelected}>
             <Trash2 className="h-4 w-4" />
             Remove
           </Button>

@@ -92,7 +92,7 @@ export function ResultsTable({
             )}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
           {(demoMode || fallback) && (
             <Link
               href="/login"
@@ -102,15 +102,15 @@ export function ResultsTable({
             </Link>
           )}
           <AddToListButton leadIds={selectedIds} disabled={loading || demoMode || fallback} />
-          <Button type="button" variant="outline" onClick={exportCsv}>
+          <Button type="button" variant="outline" className="shrink-0" onClick={exportCsv}>
             <Download className="h-4 w-4" />
             Export CSV
           </Button>
-          <Button type="button" variant="outline" onClick={exportExcel}>
+          <Button type="button" variant="outline" className="shrink-0" onClick={exportExcel}>
             <Download className="h-4 w-4" />
             Export Excel
           </Button>
-          <Button type="button" variant="secondary">
+          <Button type="button" variant="secondary" className="shrink-0">
             <Send className="h-4 w-4" />
             Send to Zantevo
           </Button>

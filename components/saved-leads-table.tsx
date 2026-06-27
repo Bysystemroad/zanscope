@@ -109,15 +109,15 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
           <option value="Medium Quality">Medium Quality</option>
           <option value="Low Quality">Low Quality</option>
         </select>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <AddToListButton leadIds={selectedIds} />
-          <Button type="button" variant="outline" onClick={exportCsv}>
+          <Button type="button" variant="outline" className="shrink-0" onClick={exportCsv}>
             <Download className="h-4 w-4" />
-            CSV
+            Export CSV
           </Button>
-          <Button type="button" variant="outline" onClick={exportExcel}>
+          <Button type="button" variant="outline" className="shrink-0" onClick={exportExcel}>
             <Download className="h-4 w-4" />
-            Excel
+            Export Excel
           </Button>
         </div>
       </div>
