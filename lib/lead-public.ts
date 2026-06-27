@@ -8,6 +8,7 @@ export function sanitizeLeadsForUsers(leads: Lead[]): Lead[] {
     email: lead.email,
     phone: lead.phone,
     address: lead.address,
+    linkedin_url: lead.linkedin_url || "",
     city: lead.city,
     country: lead.country,
     source: "Zanscope",

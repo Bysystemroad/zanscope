@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Lead } from "@/lib/dummy-data";
 import { downloadLeadsCsv, downloadLeadsExcel } from "@/lib/lead-export";
 
+function LinkedInCell({ url }: { url?: string }) {
+  if (!url) return <span className="text-muted-foreground">-</span>;
+
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="font-medium text-[#d8e0e8] hover:text-white">
+      LinkedIn
+    </a>
+  );
+}
+
 export function LeadListDetail({ listId, initialLeads }: { listId: string; initialLeads: Lead[] }) {
   const [leads, setLeads] = useState(initialLeads);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -72,7 +82,7 @@ export function LeadListDetail({ listId, initialLeads }: { listId: string; initi
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1180px] text-left text-sm">
+        <table className="w-full min-w-[1260px] text-left text-sm">
           <thead className="bg-white/6 text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-4 py-3">
@@ -85,6 +95,7 @@ export function LeadListDetail({ listId, initialLeads }: { listId: string; initi
               <th className="px-4 py-3">Website</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Phone</th>
+              <th className="px-4 py-3">LinkedIn</th>
               <th className="px-4 py-3">Location</th>
               <th className="px-4 py-3">Duplicates</th>
             </tr>
@@ -107,6 +118,7 @@ export function LeadListDetail({ listId, initialLeads }: { listId: string; initi
                 <td className="px-4 py-3 text-[#d8e0e8]">{lead.website || "-"}</td>
                 <td className="px-4 py-3">{lead.email || "-"}</td>
                 <td className="px-4 py-3">{lead.phone || "-"}</td>
+                <td className="px-4 py-3"><LinkedInCell url={lead.linkedin_url} /></td>
                 <td className="px-4 py-3">
                   {lead.city}, {lead.country}
                 </td>

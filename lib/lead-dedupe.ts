@@ -92,6 +92,7 @@ function areSimilarByCompanyAndCity(a: Lead, b: Lead) {
 function shouldPrefer(candidate: Lead, current: Lead) {
   if (Boolean(candidate.email) !== Boolean(current.email)) return Boolean(candidate.email);
   if (Boolean(candidate.phone) !== Boolean(current.phone)) return Boolean(candidate.phone);
+  if (Boolean(candidate.linkedin_url) !== Boolean(current.linkedin_url)) return Boolean(candidate.linkedin_url);
   if (Boolean(candidate.website) !== Boolean(current.website)) return Boolean(candidate.website);
   if (Boolean(candidate.address) !== Boolean(current.address)) return Boolean(candidate.address);
   if (Boolean(candidate.description) !== Boolean(current.description)) return Boolean(candidate.description);
@@ -126,6 +127,7 @@ function mergeLead(current: Lead, candidate: Lead) {
     ...preferred,
     email: preferred.email || fallback.email,
     phone: preferred.phone || fallback.phone,
+    linkedin_url: preferred.linkedin_url || fallback.linkedin_url,
     website: chooseWebsite(preferred, fallback),
     address: preferred.address || fallback.address,
     company_name: preferred.company_name || fallback.company_name,

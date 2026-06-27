@@ -13,6 +13,7 @@ const columns: ExportColumn[] = [
   { header: "Website", value: (lead) => lead.website },
   { header: "Email", value: (lead) => lead.email },
   { header: "Phone", value: (lead) => lead.phone },
+  { header: "LinkedIn URL", value: (lead) => lead.linkedin_url || "" },
   { header: "Address", value: (lead) => lead.address },
   { header: "City", value: (lead) => lead.city },
   { header: "Country", value: (lead) => lead.country },

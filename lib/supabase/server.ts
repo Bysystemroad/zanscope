@@ -133,6 +133,7 @@ function normalizeLead(row: Partial<SupabaseLeadRow>): Lead {
     email: row.email || "",
     phone: row.phone || "",
     address: row.address || "",
+    linkedin_url: row.linkedin_url || "",
     city: row.city || "",
     country: row.country || "",
     source: row.source || "",

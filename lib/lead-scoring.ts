@@ -81,7 +81,7 @@ function companyNameLooksReal(companyName: string) {
 export function calculateLeadScore(
   lead: Pick<
     Lead,
-    "company_name" | "website" | "email" | "phone" | "address" | "source" | "scraper_status" | "internal_source_count"
+    "company_name" | "website" | "email" | "phone" | "address" | "linkedin_url" | "source" | "scraper_status" | "internal_source_count"
   >
 ) {
   let score = 0;
@@ -90,12 +90,14 @@ export function calculateLeadScore(
   const hasEmail = Boolean(lead.email);
   const hasPhone = Boolean(lead.phone);
   const hasAddress = Boolean(lead.address);
+  const hasLinkedIn = Boolean(lead.linkedin_url);
   const internalSourceCount = lead.internal_source_count || 0;
 
   if (hasWebsite) score += 20;
   if (hasEmail) score += 30;
   if (hasPhone) score += 12;
   if (hasAddress) score += 8;
+  if (hasLinkedIn) score += 4;
   if (source.includes("zanscope intelligence")) score += 10;
   else if (source && source !== "zanscope preview") score += 5;
   if (lead.scraper_status === "found") score += 10;
