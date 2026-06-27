@@ -5,7 +5,8 @@ import { Download } from "lucide-react";
 import { AddToListButton } from "@/components/add-to-list-button";
 import { LeadScoreBadge } from "@/components/lead-score-badge";
 import { Button } from "@/components/ui/button";
-import { Lead, leadsToCsv } from "@/lib/dummy-data";
+import { Lead } from "@/lib/dummy-data";
+import { downloadLeadsCsv, downloadLeadsExcel } from "@/lib/lead-export";
 
 function uniqueValues(leads: Lead[], key: keyof Pick<Lead, "country" | "city" | "scraper_status">) {
   return Array.from(new Set(leads.map((lead) => String(lead[key] || "")).filter(Boolean))).sort();
@@ -61,13 +62,11 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
   }
 
   function exportCsv() {
-    const blob = new Blob([leadsToCsv(exportRows)], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = selectedLeads.length > 0 ? "zanscope-selected-leads.csv" : "zanscope-filtered-leads.csv";
-    anchor.click();
-    URL.revokeObjectURL(url);
+    downloadLeadsCsv(exportRows, selectedLeads.length > 0 ? "zanscope-selected-leads.csv" : "zanscope-filtered-leads.csv");
+  }
+
+  function exportExcel() {
+    downloadLeadsExcel(exportRows, selectedLeads.length > 0 ? "zanscope-selected-leads.xlsx" : "zanscope-filtered-leads.xlsx");
   }
 
   const selectClass = "h-10 rounded-md border border-white/10 bg-[#07111f] px-3 text-sm text-white shadow-sm outline-none focus:ring-2 focus:ring-white/30";
@@ -115,6 +114,10 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
           <Button type="button" variant="outline" onClick={exportCsv}>
             <Download className="h-4 w-4" />
             CSV
+          </Button>
+          <Button type="button" variant="outline" onClick={exportExcel}>
+            <Download className="h-4 w-4" />
+            Excel
           </Button>
         </div>
       </div>

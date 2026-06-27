@@ -6,7 +6,8 @@ import { Download, Send } from "lucide-react";
 import { AddToListButton } from "@/components/add-to-list-button";
 import { LeadScoreBadge } from "@/components/lead-score-badge";
 import { Button } from "@/components/ui/button";
-import { Lead, leadsToCsv } from "@/lib/dummy-data";
+import { Lead } from "@/lib/dummy-data";
+import { downloadLeadsCsv, downloadLeadsExcel } from "@/lib/lead-export";
 
 type ResultsTableProps = {
   leads: Lead[];
@@ -45,13 +46,11 @@ export function ResultsTable({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   function exportCsv() {
-    const blob = new Blob([leadsToCsv(leads)], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "zanscope-leads.csv";
-    anchor.click();
-    URL.revokeObjectURL(url);
+    downloadLeadsCsv(leads, "zanscope-leads.csv");
+  }
+
+  function exportExcel() {
+    downloadLeadsExcel(leads, "zanscope-leads.xlsx");
   }
 
   function toggleLead(id: string) {
@@ -106,6 +105,10 @@ export function ResultsTable({
           <Button type="button" variant="outline" onClick={exportCsv}>
             <Download className="h-4 w-4" />
             Export CSV
+          </Button>
+          <Button type="button" variant="outline" onClick={exportExcel}>
+            <Download className="h-4 w-4" />
+            Export Excel
           </Button>
           <Button type="button" variant="secondary">
             <Send className="h-4 w-4" />

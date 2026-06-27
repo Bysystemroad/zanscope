@@ -154,30 +154,3 @@ export const leads: Lead[] = [
     created_at: "2026-06-05"
   }
 ];
-
-export function leadsToCsv(rows: Lead[]) {
-  const columns: Array<[string, keyof Lead]> = [
-    ["company_name", "company_name"],
-    ["website", "website"],
-    ["email", "email"],
-    ["phone", "phone"],
-    ["address", "address"],
-    ["city", "city"],
-    ["country", "country"],
-    ["enrichment_status", "scraper_status"],
-    ["duplicate_count", "duplicate_count"],
-    ["lead_score", "lead_score"],
-    ["lead_quality", "lead_quality"],
-    ["created_at", "created_at"]
-  ];
-  const escaped = rows.map((row) =>
-    columns
-      .map(([, key]) => {
-        const value = row[key];
-        return `"${String(value).replaceAll('"', '""')}"`;
-      })
-      .join(",")
-  );
-
-  return [columns.map(([header]) => header).join(","), ...escaped].join("\n");
-}

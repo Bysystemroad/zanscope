@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Download, Trash2 } from "lucide-react";
 import { LeadScoreBadge } from "@/components/lead-score-badge";
 import { Button } from "@/components/ui/button";
-import { Lead, leadsToCsv } from "@/lib/dummy-data";
+import { Lead } from "@/lib/dummy-data";
+import { downloadLeadsCsv, downloadLeadsExcel } from "@/lib/lead-export";
 
 export function LeadListDetail({ listId, initialLeads }: { listId: string; initialLeads: Lead[] }) {
   const [leads, setLeads] = useState(initialLeads);
@@ -27,13 +28,11 @@ export function LeadListDetail({ listId, initialLeads }: { listId: string; initi
   }
 
   function exportCsv() {
-    const blob = new Blob([leadsToCsv(exportRows)], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = selectedLeads.length > 0 ? "zanscope-list-selected-leads.csv" : "zanscope-list-leads.csv";
-    anchor.click();
-    URL.revokeObjectURL(url);
+    downloadLeadsCsv(exportRows, selectedLeads.length > 0 ? "zanscope-list-selected-leads.csv" : "zanscope-list-leads.csv");
+  }
+
+  function exportExcel() {
+    downloadLeadsExcel(exportRows, selectedLeads.length > 0 ? "zanscope-list-selected-leads.xlsx" : "zanscope-list-leads.xlsx");
   }
 
   async function removeSelected() {
@@ -61,6 +60,10 @@ export function LeadListDetail({ listId, initialLeads }: { listId: string; initi
           <Button type="button" variant="outline" onClick={exportCsv}>
             <Download className="h-4 w-4" />
             CSV
+          </Button>
+          <Button type="button" variant="outline" onClick={exportExcel}>
+            <Download className="h-4 w-4" />
+            Excel
           </Button>
           <Button type="button" variant="secondary" disabled={selectedIds.length === 0} onClick={removeSelected}>
             <Trash2 className="h-4 w-4" />
