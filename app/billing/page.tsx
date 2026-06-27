@@ -18,7 +18,7 @@ export default async function BillingPage() {
           <CardHeader><CardTitle>Current plan</CardTitle></CardHeader>
           <CardContent>
             <div className="text-3xl font-semibold text-white">{userProfile.plan}</div>
-            <p className="mt-2 text-sm text-muted-foreground">Includes saved searches, lead discovery, email extraction, deduplication, and CSV export.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Includes saved searches, lead discovery, email extraction, deduplication, and Excel and CSV export.</p>
             <Button className="mt-5" variant="outline">
               <CreditCard className="h-4 w-4" />
               Manage billing

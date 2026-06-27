@@ -8,6 +8,7 @@ import {
   Check,
   Database,
   Download,
+  FileSpreadsheet,
   MailSearch,
   Radar,
   Search,
@@ -29,24 +30,64 @@ const howItWorks = [
   ["Search market", "Enter keyword, city, country, and industry to define the exact market segment."],
   ["Discover companies", "Zanscope Intelligence identifies relevant businesses with websites, addresses, and phone signals."],
   ["Extract emails", "Automated contact enrichment checks websites and contact pages for business email addresses."],
-  ["Export leads", "Deduplicated lists stay clean and ready for CSV export or Zantevo handoff."]
+  ["Export leads", "Deduplicated lists stay clean and ready for Excel and CSV export or Zantevo handoff."]
 ];
 
 const features: Array<[string, LucideIcon]> = [
   ["Verified business lead discovery", Database],
   ["Automated contact enrichment", MailSearch],
   ["Advanced company matching", ShieldCheck],
-  ["CSV export", Download],
+  ["Excel and CSV export", Download],
   ["Credit-based usage", Zap],
   ["Send to Zantevo", Sparkles]
 ];
 
-const useCases = ["Export managers", "B2B sales teams", "Lead generation agencies", "Founders"];
+const listEnrichmentBullets = [
+  "Upload your own CSV",
+  "Match company columns",
+  "Fill missing websites and contact data",
+  "Export enriched results to Excel or CSV",
+  "Save enriched leads into lists"
+];
+
+const useCases = [
+  ["Export Managers", "Find distributors, manufacturers and buyers in new markets."],
+  ["B2B Sales Teams", "Build targeted lead lists and enrich company contact data."],
+  ["Lead Generation Agencies", "Create cleaner prospect databases for clients faster."],
+  ["Founders", "Find early customers and organize outreach-ready prospects."]
+];
 
 const plans = [
-  ["Starter", "For focused prospecting tests", "500 credits"],
-  ["Pro", "For weekly outbound campaigns", "3,000 credits"],
+  ["Starter", "For focused prospecting tests", "100 starter credits"],
+  ["Growth", "For weekly outbound campaigns", "3,000 credits"],
   ["Business", "For teams and agencies", "Custom credits"]
+];
+
+const trustBullets = [
+  "Your saved searches and lead lists stay in your account.",
+  "Export-ready results with structured company data.",
+  "No provider names or technical implementation details shown to users.",
+  "Designed for B2B prospecting and market research."
+];
+
+const faqs = [
+  [
+    "What is a credit?",
+    "A credit is used when Zanscope processes or enriches a company record. Email enrichment may require an additional credit."
+  ],
+  [
+    "Can I upload my own CSV?",
+    "Yes. You can upload a company list and enrich it with websites, emails, phones, LinkedIn pages, addresses and quality scores."
+  ],
+  ["Can I export results?", "Yes. You can export results to Excel or CSV."],
+  [
+    "Is Zanscope only for new lead searches?",
+    "No. You can also enrich existing company lists and organize leads into saved lists."
+  ],
+  [
+    "Do you show how the data is collected?",
+    "No. Zanscope presents clean business intelligence results without exposing internal provider details."
+  ]
 ];
 
 function RadarVisual() {
@@ -94,21 +135,21 @@ export default function LandingPage() {
               AI targeting and B2B data intelligence
             </motion.div>
             <motion.h1 variants={fadeUp} className="max-w-4xl text-5xl font-semibold leading-tight tracking-normal text-white sm:text-7xl">
-              Find B2B leads before your competitors do.
+              Find, enrich and export B2B leads in minutes.
             </motion.h1>
             <motion.p variants={fadeUp} className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Zanscope discovers companies, websites, phone numbers, emails, addresses, removes duplicates, and exports clean lead lists to CSV.
+              Zanscope helps sales teams, founders and export managers discover companies, enrich contact details, score lead quality, remove duplicates, and export clean lists to Excel or CSV.
             </motion.p>
             <motion.div variants={fadeUp} className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link href="/search/new">
+              <Link href="/login">
                 <Button className="h-12 px-6">
                   <Search className="h-4 w-4" />
-                  Start Searching
+                  Start free with 100 credits
                 </Button>
               </Link>
               <Link href="/search/results?demo=true">
                 <Button variant="outline" className="h-12 px-6">
-                  View Demo
+                  View product demo
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -132,6 +173,41 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={fadeUp}>
+          <p className="text-sm font-semibold uppercase text-[#d8e0e8]">List Enrichment</p>
+          <h2 className="mt-3 text-4xl font-semibold text-white">Enrich your existing company lists</h2>
+          <p className="mt-4 leading-7 text-muted-foreground">
+            Upload a CSV with company names, websites, countries or cities. Zanscope enriches each record with websites, emails, phone numbers, LinkedIn company pages, addresses and lead quality scores.
+          </p>
+          <Link href="/dashboard/enrich" className="mt-7 inline-flex">
+            <Button variant="outline" className="h-11 px-5">
+              <FileSpreadsheet className="h-4 w-4" />
+              Enrich a list
+            </Button>
+          </Link>
+        </motion.div>
+        <div className="premium-border rounded-3xl">
+          <div className="glass-panel rounded-3xl p-6">
+            <div className="mb-5 flex items-center justify-between border-b border-white/8 pb-4">
+              <div>
+                <div className="text-sm font-semibold text-white">CSV upload workflow</div>
+                <div className="text-xs text-muted-foreground">Map, enrich, score, export</div>
+              </div>
+              <FileSpreadsheet className="h-5 w-5 text-[#d8e0e8]" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {listEnrichmentBullets.map((item) => (
+                <div key={item} className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+                  <Check className="h-4 w-4 text-[#d8e0e8]" />
+                  <div className="mt-3 text-sm font-medium text-white">{item}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="border-y border-white/8 bg-white/[0.02]">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="mb-10 max-w-2xl">
@@ -153,7 +229,8 @@ export default function LandingPage() {
         <div>
           <p className="text-sm font-semibold uppercase text-[#d8e0e8]">Product preview</p>
           <h2 className="mt-3 text-4xl font-semibold text-white">From search to export in one control center.</h2>
-          <p className="mt-4 leading-7 text-muted-foreground">Review enrichment status, duplicates, credit usage, and CSV output from one premium data workspace.</p>
+          <p className="mt-4 leading-7 text-muted-foreground">Review enrichment status, duplicates, credit usage, and Excel or CSV output from one premium data workspace.</p>
+          <p className="mt-3 text-sm text-muted-foreground">Sample lead data shown for preview.</p>
         </div>
         <div className="premium-border rounded-3xl">
           <div className="glass-panel overflow-hidden rounded-3xl">
@@ -164,7 +241,7 @@ export default function LandingPage() {
               </div>
               <Button variant="outline">
                 <Download className="h-4 w-4" />
-                CSV
+                Excel / CSV
               </Button>
             </div>
             <div className="divide-y divide-white/10">
@@ -188,12 +265,30 @@ export default function LandingPage() {
 
       <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
         <div className="grid gap-4 md:grid-cols-4">
-          {useCases.map((useCase) => (
+          {useCases.map(([useCase, copy]) => (
             <div key={useCase} className="glass-panel rounded-2xl p-5">
               <Check className="h-5 w-5 text-[#d8e0e8]" />
               <h3 className="mt-4 font-semibold text-white">{useCase}</h3>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">{copy}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="border-y border-white/8 bg-white/[0.02]">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
+          <div>
+            <p className="text-sm font-semibold uppercase text-[#d8e0e8]">Trust and privacy</p>
+            <h2 className="mt-3 text-4xl font-semibold text-white">Built for clean and private lead workflows</h2>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {trustBullets.map((bullet) => (
+              <div key={bullet} className="glass-panel rounded-2xl p-5">
+                <ShieldCheck className="h-5 w-5 text-[#d8e0e8]" />
+                <p className="mt-4 text-sm leading-6 text-muted-foreground">{bullet}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -209,28 +304,59 @@ export default function LandingPage() {
                 <h3 className="text-xl font-semibold text-white">{name}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{copy}</p>
                 <div className="mt-6 text-3xl font-semibold text-white">{credits}</div>
-                <Button className="mt-6 w-full" variant={name === "Pro" ? "primary" : "outline"}>Choose {name}</Button>
+                <Button className="mt-6 w-full" variant={name === "Growth" ? "primary" : "outline"}>Coming soon</Button>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-5xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mb-10 text-center">
+          <p className="text-sm font-semibold uppercase text-[#d8e0e8]">FAQ</p>
+          <h2 className="mt-3 text-4xl font-semibold text-white">Questions before you start?</h2>
+        </div>
+        <div className="grid gap-4">
+          {faqs.map(([question, answer]) => (
+            <div key={question} className="glass-panel rounded-2xl p-5">
+              <h3 className="font-semibold text-white">{question}</h3>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">{answer}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-4 pb-20 text-center sm:px-6 lg:px-8">
         <div className="premium-border rounded-3xl">
           <div className="glass-panel rounded-3xl p-10">
             <Radar className="mx-auto h-10 w-10 text-[#d8e0e8]" />
             <h2 className="mt-5 text-4xl font-semibold text-white">Start finding sharper B2B opportunities.</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">Launch a search, discover companies, extract emails, remove duplicates, and export your next lead list.</p>
-            <Link href="/search/new" className="mt-7 inline-flex">
+            <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">Launch a search or enrich your own CSV, then export a clean lead list to Excel or CSV.</p>
+            <Link href="/login" className="mt-7 inline-flex">
               <Button className="h-12 px-6">
-                Start Searching
+                Start free with 100 credits
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
         </div>
       </section>
+
+      <footer className="border-t border-white/8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 text-sm text-muted-foreground sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+          <div>
+            <div className="font-semibold text-white">Zanscope</div>
+            <div className="mt-1">© 2026 Zanscope. All rights reserved.</div>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <Link href="/dashboard" className="hover:text-white">Product</Link>
+            <Link href="/billing" className="hover:text-white">Pricing</Link>
+            <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-white">Terms of Service</Link>
+            <a href="mailto:contact@zanscope.com" className="hover:text-white">Contact</a>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
