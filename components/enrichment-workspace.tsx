@@ -53,6 +53,14 @@ const inputClass =
 
 const labelClass = "text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground";
 
+const enrichmentLoadingSteps = [
+  "Reading uploaded file",
+  "Mapping company rows",
+  "Matching companies",
+  "Enriching contact details",
+  "Preparing enriched export"
+];
+
 function cleanMessage(message: string) {
   return message
     .replace(/Google Places|Google Maps|Google API|Places API|Google Search|Google/gi, "Business Intelligence Engine")
@@ -340,10 +348,20 @@ export function EnrichmentWorkspace() {
         <div className="glass-panel rounded-2xl p-5">
           <div className="flex items-center gap-3 text-white">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="font-medium">Enriching your list with Zanscope Intelligence...</span>
+            <span className="font-medium">Preparing your enriched lead list...</span>
           </div>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/8">
-            <div className="h-full w-2/3 animate-pulse rounded-full bg-white/80" />
+          <div className="mt-5 grid gap-3 md:grid-cols-5">
+            {enrichmentLoadingSteps.map((step, index) => (
+              <div key={step} className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full animate-pulse rounded-full bg-white/80"
+                    style={{ width: `${Math.min(100, 38 + index * 13)}%` }}
+                  />
+                </div>
+                <div className="text-xs font-medium text-[#d8e0e8]">{step}</div>
+              </div>
+            ))}
           </div>
         </div>
       )}

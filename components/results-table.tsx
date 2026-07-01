@@ -33,6 +33,14 @@ function enrichmentLabel(status: Lead["scraper_status"]) {
   return "Pending";
 }
 
+const searchLoadingSteps = [
+  "Finding relevant companies",
+  "Matching business websites",
+  "Enriching contact details",
+  "Calculating lead quality",
+  "Preparing export-ready results"
+];
+
 function LinkedInCell({ url }: { url?: string }) {
   if (!url) return <span className="text-muted-foreground">-</span>;
 
@@ -137,8 +145,21 @@ export function ResultsTable({
         </div>
       )}
       {loading && (
-        <div className="border-b border-white/10 px-4 py-8 text-sm text-muted-foreground">
-          Scanning business intelligence sources and preparing clean lead results...
+        <div className="border-b border-white/10 px-4 py-6">
+          <div className="mb-4 text-sm font-medium text-white">Building your lead list...</div>
+          <div className="grid gap-3 md:grid-cols-5">
+            {searchLoadingSteps.map((step, index) => (
+              <div key={step} className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full animate-pulse rounded-full bg-white/80"
+                    style={{ width: `${Math.min(100, 42 + index * 12)}%` }}
+                  />
+                </div>
+                <div className="text-xs font-medium text-[#d8e0e8]">{step}</div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
       <div className="overflow-x-auto">

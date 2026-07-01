@@ -70,6 +70,8 @@ export function AuthForm() {
             ? "Access your workspace, saved leads, exports, lead lists and search history."
             : "Discover high-quality B2B companies, organize your prospects, and build better outbound campaigns."}
         </p>
+        <p className="mt-3 text-sm font-medium text-[#d8e0e8]">Secure access to your lead workspace.</p>
+        <p className="mt-1 text-xs leading-5 text-[#7f8c98]">Your searches, credits, exports and lead lists stay linked to your account.</p>
       </div>
 
       <div className="mb-6 flex rounded-2xl border border-white/10 bg-white/[0.045] p-1">

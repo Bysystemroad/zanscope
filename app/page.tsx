@@ -4,7 +4,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  Building2,
   Check,
   Database,
   Download,
@@ -19,7 +18,6 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { leads } from "@/lib/dummy-data";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 22 },
@@ -27,10 +25,10 @@ const fadeUp = {
 };
 
 const howItWorks = [
-  ["Search market", "Enter keyword, city, country, and industry to define the exact market segment."],
-  ["Discover companies", "Zanscope Intelligence identifies relevant businesses with websites, addresses, and phone signals."],
-  ["Extract emails", "Automated contact enrichment checks websites and contact pages for business email addresses."],
-  ["Export leads", "Deduplicated lists stay clean and ready for Excel and CSV export or Zantevo handoff."]
+  ["Upload or search", "Start from a market search or upload your own company CSV."],
+  ["Discover companies", "Identify relevant businesses, websites, and market-fit company records."],
+  ["Enrich contact data", "Fill in emails, phone numbers, LinkedIn pages, addresses, and quality scores."],
+  ["Export ready-to-use leads", "Download clean Excel or CSV files or save leads into organized lists."]
 ];
 
 const features: Array<[string, LucideIcon]> = [
@@ -48,6 +46,24 @@ const listEnrichmentBullets = [
   "Fill missing websites and contact data",
   "Export enriched results to Excel or CSV",
   "Save enriched leads into lists"
+];
+
+const productPreviewRows = [
+  ["Northstar Automation", "northstar.example", "sales@northstar.example", "LinkedIn", "+1 512 555 0148", "92"],
+  ["LatticeOps", "latticeops.example", "hello@latticeops.example", "LinkedIn", "+1 512 555 0199", "88"],
+  ["Clearpath Systems", "clearpath.example", "contact@clearpath.example", "LinkedIn", "+1 512 555 0182", "84"]
+];
+
+const metrics = [
+  ["Built for fast B2B prospecting", "Move from market idea to structured prospect list without spreadsheet cleanup."],
+  ["Enrichment-ready lead workflows", "Search new markets or upload existing company records for enrichment."],
+  ["Excel and CSV export", "Download clean files your sales, export, or agency team can use immediately."],
+  ["Saved lists and search history", "Keep market research, lead lists, and exports organized in your account."]
+];
+
+const beforeAfter: Array<[string, string[]]> = [
+  ["Before", ["Company Name", "Country", "City"]],
+  ["After", ["Website", "Email", "LinkedIn", "Phone", "Address", "Lead Score", "Export-ready Excel"]]
 ];
 
 const useCases = [
@@ -122,6 +138,55 @@ function RadarVisual() {
   );
 }
 
+function ProductPreview() {
+  return (
+    <div className="premium-border mx-auto max-w-7xl rounded-[2rem]">
+      <div className="glass-panel overflow-hidden rounded-[2rem]">
+        <div className="flex flex-col gap-4 border-b border-white/8 p-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-white">B2B lead workspace</div>
+            <div className="mt-1 text-xs text-muted-foreground">Company table, enrichment fields, lead score, and export actions</div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline">
+              <Download className="h-4 w-4" />
+              Export Excel
+            </Button>
+            <Button variant="outline">
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[960px] text-left text-sm">
+            <thead className="bg-white/6 text-xs uppercase text-muted-foreground">
+              <tr>
+                {["Company", "Website", "Email", "LinkedIn", "Phone", "Lead Score"].map((heading) => (
+                  <th key={heading} className="px-5 py-4">{heading}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10">
+              {productPreviewRows.map((row) => (
+                <tr key={row[0]} className="hover:bg-white/5">
+                  <td className="px-5 py-4 font-medium text-white">{row[0]}</td>
+                  <td className="px-5 py-4 text-[#d8e0e8]">{row[1]}</td>
+                  <td className="px-5 py-4">{row[2]}</td>
+                  <td className="px-5 py-4 text-[#d8e0e8]">{row[3]}</td>
+                  <td className="px-5 py-4">{row[4]}</td>
+                  <td className="px-5 py-4 text-white">{row[5]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="border-t border-white/8 px-5 py-3 text-xs text-muted-foreground">Sample lead data shown for preview.</div>
+      </div>
+    </div>
+  );
+}
+
 export default function LandingPage() {
   return (
     <main className="overflow-hidden">
@@ -135,10 +200,10 @@ export default function LandingPage() {
               AI targeting and B2B data intelligence
             </motion.div>
             <motion.h1 variants={fadeUp} className="max-w-4xl text-5xl font-semibold leading-tight tracking-normal text-white sm:text-7xl">
-              Find, enrich and export B2B leads in minutes.
+              Find Companies. Enrich Contacts. Export Ready-to-Use Leads.
             </motion.h1>
             <motion.p variants={fadeUp} className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Zanscope helps sales teams, founders and export managers discover companies, enrich contact details, score lead quality, remove duplicates, and export clean lists to Excel or CSV.
+              Build high-quality B2B prospect lists in minutes instead of hours. Zanscope helps you discover companies, enrich contact data, score lead quality, remove duplicates, and export clean Excel or CSV files.
             </motion.p>
             <motion.div variants={fadeUp} className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link href="/login">
@@ -161,7 +226,17 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="px-4 py-16 sm:px-6 lg:px-8">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={fadeUp}>
+          <ProductPreview />
+        </motion.div>
+      </section>
+
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mb-10 max-w-2xl">
+          <p className="text-sm font-semibold uppercase text-[#d8e0e8]">How it works</p>
+          <h2 className="mt-3 text-4xl font-semibold text-white">From raw market idea to export-ready leads.</h2>
+        </div>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} transition={{ staggerChildren: 0.08 }} className="grid gap-4 md:grid-cols-4">
           {howItWorks.map(([title, copy], index) => (
             <motion.div key={title} variants={fadeUp} className="glass-panel rounded-2xl p-5 transition hover:-translate-y-1 hover:border-white/20">
@@ -171,6 +246,19 @@ export default function LandingPage() {
             </motion.div>
           ))}
         </motion.div>
+      </section>
+
+      <section className="border-y border-white/8 bg-white/[0.02]">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="grid gap-4 md:grid-cols-4">
+            {metrics.map(([title, copy]) => (
+              <div key={title} className="glass-panel rounded-2xl p-5">
+                <div className="text-sm font-semibold text-white">{title}</div>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">{copy}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
@@ -227,35 +315,26 @@ export default function LandingPage() {
 
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
         <div>
-          <p className="text-sm font-semibold uppercase text-[#d8e0e8]">Product preview</p>
-          <h2 className="mt-3 text-4xl font-semibold text-white">From search to export in one control center.</h2>
-          <p className="mt-4 leading-7 text-muted-foreground">Review enrichment status, duplicates, credit usage, and Excel or CSV output from one premium data workspace.</p>
-          <p className="mt-3 text-sm text-muted-foreground">Sample lead data shown for preview.</p>
+          <p className="text-sm font-semibold uppercase text-[#d8e0e8]">Before / After</p>
+          <h2 className="mt-3 text-4xl font-semibold text-white">Turn sparse company rows into outreach-ready records.</h2>
+          <p className="mt-4 leading-7 text-muted-foreground">
+            Zanscope starts with basic company inputs, enriches the missing fields, scores each record, and prepares a clean Excel file your team can use immediately.
+          </p>
         </div>
         <div className="premium-border rounded-3xl">
-          <div className="glass-panel overflow-hidden rounded-3xl">
-            <div className="flex items-center justify-between border-b border-white/8 p-4">
-              <div>
-                <div className="text-sm font-semibold text-white">Austin software companies</div>
-                <div className="text-xs text-muted-foreground">Zanscope Intelligence + contact enrichment</div>
-              </div>
-              <Button variant="outline">
-                <Download className="h-4 w-4" />
-                Excel / CSV
-              </Button>
-            </div>
-            <div className="divide-y divide-white/10">
-              {leads.slice(0, 4).map((lead) => (
-                <div key={lead.id} className="grid gap-4 p-4 md:grid-cols-[1fr_180px_110px]">
-                  <div>
-                    <div className="font-medium text-white">{lead.company_name}</div>
-                    <div className="mt-1 text-sm text-white">{lead.email}</div>
+          <div className="glass-panel rounded-3xl p-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              {beforeAfter.map(([title, fields]) => (
+                <div key={title} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                  <div className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-[#d8e0e8]">{title}</div>
+                  <div className="space-y-3">
+                    {fields.map((field) => (
+                      <div key={field} className="flex items-center justify-between rounded-xl border border-white/10 bg-[#07111f] px-3 py-2 text-sm">
+                        <span className="text-muted-foreground">{field}</span>
+                        <span className="text-white">{title === "Before" ? "Input" : "Enriched"}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Building2 className="h-4 w-4" />
-                    {lead.city}
-                  </div>
-                  <div className="rounded-md border border-white/10 bg-white/6 px-2 py-1 text-center text-xs text-white">found</div>
                 </div>
               ))}
             </div>
@@ -349,10 +428,12 @@ export default function LandingPage() {
             <div className="mt-1">© 2026 Zanscope. All rights reserved.</div>
           </div>
           <div className="flex flex-wrap gap-4">
-            <Link href="/dashboard" className="hover:text-white">Product</Link>
+            <a href="#" className="hover:text-white">Product</a>
+            <a href="#" className="hover:text-white">Solutions</a>
             <Link href="/billing" className="hover:text-white">Pricing</Link>
-            <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-white">Terms of Service</Link>
+            <a href="#" className="hover:text-white">Roadmap</a>
+            <a href="#" className="hover:text-white">Privacy</a>
+            <a href="#" className="hover:text-white">Terms</a>
             <a href="mailto:contact@zanscope.com" className="hover:text-white">Contact</a>
           </div>
         </div>
