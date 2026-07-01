@@ -19,16 +19,6 @@ function enrichmentLabel(status: Lead["scraper_status"]) {
   return "Pending";
 }
 
-function LinkedInCell({ url }: { url?: string }) {
-  if (!url) return <span className="text-muted-foreground">-</span>;
-
-  return (
-    <a href={url} target="_blank" rel="noreferrer" className="font-medium text-[#d8e0e8] hover:text-white">
-      LinkedIn
-    </a>
-  );
-}
-
 export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
@@ -140,7 +130,7 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
         </button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1320px] text-left text-sm">
+        <table className="w-full min-w-[1240px] text-left text-sm">
           <thead className="bg-white/6 text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-4 py-3">Select</th>
@@ -149,7 +139,6 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
               <th className="px-4 py-3">Website</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Phone</th>
-              <th className="px-4 py-3">LinkedIn</th>
               <th className="px-4 py-3">Location</th>
               <th className="px-4 py-3">Enrichment</th>
               <th className="px-4 py-3">Duplicates</th>
@@ -173,7 +162,6 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
                 <td className="px-4 py-3 text-[#d8e0e8]">{lead.website || "-"}</td>
                 <td className="px-4 py-3">{lead.email || "-"}</td>
                 <td className="px-4 py-3">{lead.phone || "-"}</td>
-                <td className="px-4 py-3"><LinkedInCell url={lead.linkedin_url} /></td>
                 <td className="px-4 py-3">
                   {lead.city}, {lead.country}
                 </td>

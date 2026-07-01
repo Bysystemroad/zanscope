@@ -27,7 +27,7 @@ const fadeUp = {
 const howItWorks = [
   ["Upload or search", "Start from a market search or upload your own company CSV."],
   ["Discover companies", "Identify relevant businesses, websites, and market-fit company records."],
-  ["Enrich contact data", "Fill in emails, phone numbers, LinkedIn pages, addresses, and quality scores."],
+  ["Enrich contact data", "Fill in emails, phone numbers, addresses, and lead quality scores."],
   ["Export ready-to-use leads", "Download clean Excel or CSV files or save leads into organized lists."]
 ];
 
@@ -49,9 +49,9 @@ const listEnrichmentBullets = [
 ];
 
 const productPreviewRows = [
-  ["Northstar Automation", "northstar.example", "sales@northstar.example", "LinkedIn", "+1 512 555 0148", "92"],
-  ["LatticeOps", "latticeops.example", "hello@latticeops.example", "LinkedIn", "+1 512 555 0199", "88"],
-  ["Clearpath Systems", "clearpath.example", "contact@clearpath.example", "LinkedIn", "+1 512 555 0182", "84"]
+  ["Northstar Automation", "northstar.example", "sales@northstar.example", "+1 512 555 0148", "92", "Enriched"],
+  ["LatticeOps", "latticeops.example", "hello@latticeops.example", "+1 512 555 0199", "88", "Enriched"],
+  ["Clearpath Systems", "clearpath.example", "contact@clearpath.example", "+1 512 555 0182", "84", "Enriched"]
 ];
 
 const metrics = [
@@ -63,7 +63,7 @@ const metrics = [
 
 const beforeAfter: Array<[string, string[]]> = [
   ["Before", ["Company Name", "Country", "City"]],
-  ["After", ["Website", "Email", "LinkedIn", "Phone", "Address", "Lead Score", "Export-ready Excel"]]
+  ["After", ["Website", "Email", "Phone", "Address", "Lead Quality Score", "Export-ready Excel"]]
 ];
 
 const useCases = [
@@ -93,7 +93,7 @@ const faqs = [
   ],
   [
     "Can I upload my own CSV?",
-    "Yes. You can upload a company list and enrich it with websites, emails, phones, LinkedIn pages, addresses and quality scores."
+    "Yes. You can upload a company list and enrich it with websites, emails, phones, addresses and quality scores."
   ],
   ["Can I export results?", "Yes. You can export results to Excel or CSV."],
   [
@@ -162,7 +162,7 @@ function ProductPreview() {
           <table className="w-full min-w-[960px] text-left text-sm">
             <thead className="bg-white/6 text-xs uppercase text-muted-foreground">
               <tr>
-                {["Company", "Website", "Email", "LinkedIn", "Phone", "Lead Score"].map((heading) => (
+                {["Company", "Website", "Email", "Phone", "Lead Score", "Status"].map((heading) => (
                   <th key={heading} className="px-5 py-4">{heading}</th>
                 ))}
               </tr>
@@ -266,7 +266,7 @@ export default function LandingPage() {
           <p className="text-sm font-semibold uppercase text-[#d8e0e8]">List Enrichment</p>
           <h2 className="mt-3 text-4xl font-semibold text-white">Enrich your existing company lists</h2>
           <p className="mt-4 leading-7 text-muted-foreground">
-            Upload a CSV with company names, websites, countries or cities. Zanscope enriches each record with websites, emails, phone numbers, LinkedIn company pages, addresses and lead quality scores.
+            Upload a CSV with company names, websites, countries or cities. Zanscope enriches each record with websites, emails, phone numbers, addresses and lead quality scores.
           </p>
           <Link href="/dashboard/enrich" className="mt-7 inline-flex">
             <Button variant="outline" className="h-11 px-5">

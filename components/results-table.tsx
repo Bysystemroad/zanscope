@@ -41,16 +41,6 @@ const searchLoadingSteps = [
   "Preparing export-ready results"
 ];
 
-function LinkedInCell({ url }: { url?: string }) {
-  if (!url) return <span className="text-muted-foreground">-</span>;
-
-  return (
-    <a href={url} target="_blank" rel="noreferrer" className="font-medium text-[#d8e0e8] hover:text-white">
-      LinkedIn
-    </a>
-  );
-}
-
 export function ResultsTable({
   leads,
   fallback = false,
@@ -163,7 +153,7 @@ export function ResultsTable({
         </div>
       )}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1380px] text-left text-sm">
+        <table className="w-full min-w-[1300px] text-left text-sm">
           <thead className="bg-white/6 text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-4 py-3">
@@ -176,7 +166,6 @@ export function ResultsTable({
               <th className="px-4 py-3">Website</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Phone</th>
-              <th className="px-4 py-3">LinkedIn</th>
               <th className="px-4 py-3">Address</th>
               <th className="px-4 py-3">Location</th>
               <th className="px-4 py-3">Enrichment</th>
@@ -201,7 +190,6 @@ export function ResultsTable({
                 <td className="px-4 py-3 text-[#d8e0e8]">{lead.website || "-"}</td>
                 <td className="px-4 py-3">{lead.email || "-"}</td>
                 <td className="px-4 py-3">{lead.phone || "-"}</td>
-                <td className="px-4 py-3"><LinkedInCell url={lead.linkedin_url} /></td>
                 <td className="px-4 py-3">{lead.address || "-"}</td>
                 <td className="px-4 py-3">
                   {lead.city}, {lead.country}

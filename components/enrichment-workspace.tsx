@@ -83,16 +83,6 @@ function statusClass(status: string) {
   return "border-white/10 bg-white/6 text-muted-foreground";
 }
 
-function LinkedInCell({ url }: { url?: string }) {
-  if (!url) return <span className="text-muted-foreground">-</span>;
-
-  return (
-    <a href={url} target="_blank" rel="noreferrer" className="font-medium text-[#d8e0e8] hover:text-white">
-      LinkedIn
-    </a>
-  );
-}
-
 function columnLabel(key: keyof ColumnMapping) {
   const labels: Record<keyof ColumnMapping, string> = {
     companyName: "Company Name",
@@ -396,7 +386,7 @@ export function EnrichmentWorkspace() {
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1340px] text-left text-sm">
+            <table className="w-full min-w-[1240px] text-left text-sm">
               <thead className="bg-white/6 text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3">Select</th>
@@ -405,7 +395,6 @@ export function EnrichmentWorkspace() {
                   <th className="px-4 py-3">Website</th>
                   <th className="px-4 py-3">Email</th>
                   <th className="px-4 py-3">Phone</th>
-                  <th className="px-4 py-3">LinkedIn</th>
                   <th className="px-4 py-3">Address</th>
                   <th className="px-4 py-3">Location</th>
                   <th className="px-4 py-3">Status</th>
@@ -430,7 +419,6 @@ export function EnrichmentWorkspace() {
                       <td className="max-w-[240px] truncate px-4 py-3 text-[#d8e0e8]" title={lead.website}>{lead.website || "-"}</td>
                       <td className="px-4 py-3">{lead.email || "-"}</td>
                       <td className="px-4 py-3">{lead.phone || "-"}</td>
-                      <td className="px-4 py-3"><LinkedInCell url={lead.linkedin_url} /></td>
                       <td className="max-w-[260px] truncate px-4 py-3" title={lead.address}>{lead.address || "-"}</td>
                       <td className="px-4 py-3">{[lead.city, lead.country].filter(Boolean).join(", ") || "-"}</td>
                       <td className="px-4 py-3">
