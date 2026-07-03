@@ -7,15 +7,23 @@ import { creditPackages, type StripePackageKey } from "@/lib/stripe-packages";
 
 type CreditPurchaseCardsProps = {
   isLoggedIn: boolean;
+  loggedInButtonText?: string;
+  loggedOutButtonText?: string;
+  loggedOutHref?: string;
 };
 
-export function CreditPurchaseCards({ isLoggedIn }: CreditPurchaseCardsProps) {
+export function CreditPurchaseCards({
+  isLoggedIn,
+  loggedInButtonText = "Buy credits",
+  loggedOutButtonText = "Buy credits",
+  loggedOutHref = "/login"
+}: CreditPurchaseCardsProps) {
   const [loadingPackage, setLoadingPackage] = useState<StripePackageKey | "">("");
   const [message, setMessage] = useState("");
 
   async function buyCredits(packageKey: StripePackageKey) {
     if (!isLoggedIn) {
-      setMessage("Log in to buy credits.");
+      window.location.href = loggedOutHref;
       return;
     }
 
@@ -64,11 +72,11 @@ export function CreditPurchaseCards({ isLoggedIn }: CreditPurchaseCardsProps) {
             <Button
               type="button"
               className="mt-6 w-full"
-              disabled={!isLoggedIn || Boolean(loadingPackage)}
+              disabled={Boolean(loadingPackage)}
               onClick={() => buyCredits(item.key)}
             >
               {loadingPackage === item.key ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-              Buy credits
+              {isLoggedIn ? loggedInButtonText : loggedOutButtonText}
             </Button>
           </div>
         ))}

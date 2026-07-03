@@ -57,7 +57,7 @@ export default async function BillingPage({
           <Zap className="h-5 w-5" />
           <h2 className="text-xl font-semibold">Buy credits</h2>
         </div>
-        <CreditPurchaseCards isLoggedIn={!userProfile.demoMode} />
+        <CreditPurchaseCards isLoggedIn={!userProfile.demoMode} loggedInButtonText="Buy credits" loggedOutButtonText="Log in to buy credits" />
       </div>
     </AppShell>
   );

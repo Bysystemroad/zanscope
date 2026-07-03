@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -17,7 +18,9 @@ import {
   Zap
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { CreditPurchaseCards } from "@/components/credit-purchase-cards";
 import { Button } from "@/components/ui/button";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase/client";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 22 },
@@ -71,12 +74,6 @@ const useCases = [
   ["B2B Sales Teams", "Build targeted lead lists and enrich company contact data."],
   ["Lead Generation Agencies", "Create cleaner prospect databases for clients faster."],
   ["Founders", "Find early customers and organize outreach-ready prospects."]
-];
-
-const plans = [
-  ["Starter", "For focused prospecting tests", "100 starter credits"],
-  ["Growth", "For weekly outbound campaigns", "3,000 credits"],
-  ["Business", "For teams and agencies", "Custom credits"]
 ];
 
 const trustBullets = [
@@ -188,6 +185,29 @@ function ProductPreview() {
 }
 
 export default function LandingPage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    if (!supabase || !isSupabaseConfigured) return;
+
+    let mounted = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted) setIsLoggedIn(Boolean(data.session));
+    });
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(Boolean(session));
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
   return (
     <main className="overflow-hidden">
       <section className="relative min-h-[calc(100vh-5rem)] border-b border-white/8">
@@ -377,16 +397,11 @@ export default function LandingPage() {
             <p className="text-sm font-semibold uppercase text-[#d8e0e8]">Pricing preview</p>
             <h2 className="mt-3 text-4xl font-semibold text-white">Credits that scale with discovery.</h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {plans.map(([name, copy, credits]) => (
-              <div key={name} className="glass-panel rounded-2xl p-6 transition hover:-translate-y-1 hover:border-white/20">
-                <h3 className="text-xl font-semibold text-white">{name}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{copy}</p>
-                <div className="mt-6 text-3xl font-semibold text-white">{credits}</div>
-                <Button className="mt-6 w-full" variant={name === "Growth" ? "primary" : "outline"}>Coming soon</Button>
-              </div>
-            ))}
-          </div>
+          <CreditPurchaseCards
+            isLoggedIn={isLoggedIn}
+            loggedInButtonText="Buy Credits"
+            loggedOutButtonText="Get Started"
+          />
         </div>
       </section>
 
