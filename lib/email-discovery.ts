@@ -44,9 +44,10 @@ const DISCOVERY_PATHS = [
 ];
 
 const REQUEST_TIMEOUT_MS = 5000;
+const COMPANY_TIMEOUT_MS = 12000;
 const MAX_HTML_CHARS = 700000;
 const BULK_CONCURRENCY = 3;
-const MAX_PAGES_PER_COMPANY = 28;
+const MAX_PAGES_PER_COMPANY = 8;
 
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 const PHONE_REGEX = /(?:\+|00)?(?:[\d][\s()./-]?){7,18}\d/g;
@@ -322,8 +323,11 @@ export async function discoverWebsiteEmail(website: string): Promise<ScrapeResul
   const emails = new Set<string>();
   const phones = new Set<string>();
   const addresses = new Set<string>();
+  const startedAt = Date.now();
 
   for (const url of urls) {
+    if (Date.now() - startedAt >= COMPANY_TIMEOUT_MS) break;
+
     try {
       const html = await fetchWithTimeout(url);
       if (!html) continue;

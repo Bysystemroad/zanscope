@@ -40,6 +40,26 @@ type SupabaseSearchRow = {
   created_at: string;
 };
 
+export type SavedLeadsFilters = {
+  page?: number;
+  pageSize?: number;
+  country?: string;
+  city?: string;
+  emailFound?: string;
+  scraperStatus?: string;
+  quality?: string;
+};
+
+export type SavedLeadsResult = {
+  demoMode: boolean;
+  leads: Lead[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  filters: Required<Omit<SavedLeadsFilters, "page" | "pageSize">>;
+};
+
 type SupabaseLeadListRow = {
   id: string;
   name: string;
@@ -147,7 +167,10 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const [
     searchesResult,
     recentSearchesResult,
-    leadsResult,
+    leadsCountResult,
+    enrichedCountResult,
+    emailCountResult,
+    leadScoreResult,
     transactionsResult,
     leadListsResult,
     enrichmentJobsResult
@@ -159,26 +182,28 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(5),
-    supabase.from("leads").select("id, email, scraper_status, lead_score").eq("user_id", user.id),
-    supabase.from("credit_transactions").select("amount, type").eq("user_id", user.id),
+    supabase.from("leads").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    supabase.from("leads").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("scraper_status", "found"),
+    supabase.from("leads").select("id", { count: "exact", head: true }).eq("user_id", user.id).neq("email", ""),
+    supabase.from("leads").select("lead_score").eq("user_id", user.id).not("lead_score", "is", null),
+    supabase.from("credit_transactions").select("amount").eq("user_id", user.id).lt("amount", 0),
     supabase.from("lead_lists").select("id", { count: "exact", head: true }).eq("user_id", user.id),
     supabase.from("enrichment_jobs").select("id", { count: "exact", head: true }).eq("user_id", user.id)
   ]);
 
-  const leads = (leadsResult.data || []) as Array<{ email?: string | null; scraper_status?: string | null; lead_score?: number | null }>;
-  const transactions = (transactionsResult.data || []) as Array<{ amount?: number | null; type?: string | null }>;
+  const leadScores = (leadScoreResult.data || []) as Array<{ lead_score?: number | null }>;
+  const transactions = (transactionsResult.data || []) as Array<{ amount?: number | null }>;
   const recentRows = (recentSearchesResult.data || []) as SupabaseSearchRow[];
-  const companiesFound = leads.length;
-  const scoredLeads = leads.filter((lead) => typeof lead.lead_score === "number");
+  const companiesFound = leadsCountResult.count || 0;
+  const scoredLeads = leadScores.filter((lead) => typeof lead.lead_score === "number");
 
   return {
     totalSearches: searchesResult.count || 0,
     companiesFound,
-    companiesEnriched: leads.filter((lead) => lead.scraper_status === "found").length,
-    emailsFound: leads.filter((lead) => Boolean(lead.email)).length,
+    companiesEnriched: enrichedCountResult.count || 0,
+    emailsFound: emailCountResult.count || 0,
     creditsUsed: Math.abs(
       transactions
-        .filter((transaction) => (transaction.amount || 0) < 0)
         .reduce((sum, transaction) => sum + (transaction.amount || 0), 0)
     ),
     savedLeads: companiesFound,
@@ -249,6 +274,25 @@ function sortLeadsByScore(leads: Lead[]) {
   });
 }
 
+function normalizePage(value?: number) {
+  return Number.isFinite(value) && value && value > 0 ? Math.floor(value) : 1;
+}
+
+function normalizePageSize(value?: number) {
+  if (!Number.isFinite(value) || !value) return 50;
+  return Math.min(Math.max(Math.floor(value), 1), 100);
+}
+
+function normalizeSavedLeadFilters(filters: SavedLeadsFilters = {}) {
+  return {
+    country: filters.country?.trim() || "",
+    city: filters.city?.trim() || "",
+    emailFound: filters.emailFound === "yes" || filters.emailFound === "no" ? filters.emailFound : "",
+    scraperStatus: filters.scraperStatus?.trim() || "",
+    quality: filters.quality?.trim() || ""
+  };
+}
+
 function calculateStoredCost(leads: Lead[], storedCost?: number | null) {
   if (storedCost && storedCost > 0) return storedCost;
   return leads.length + leads.filter((lead) => Boolean(lead.email)).length;
@@ -299,9 +343,22 @@ export async function getSearchHistory() {
   return { demoMode: false, searches: history };
 }
 
-export async function getSavedLeads() {
+export async function getSavedLeads(filters: SavedLeadsFilters = {}): Promise<SavedLeadsResult> {
+  const page = normalizePage(filters.page);
+  const pageSize = normalizePageSize(filters.pageSize);
+  const normalizedFilters = normalizeSavedLeadFilters(filters);
+  const demoRows = sortLeadsByScore(demoLeads);
+
   if (!isServerSupabaseConfigured()) {
-    return { demoMode: true, leads: sortLeadsByScore(demoLeads) };
+    return {
+      demoMode: true,
+      leads: demoRows.slice((page - 1) * pageSize, page * pageSize),
+      page,
+      pageSize,
+      total: demoRows.length,
+      totalPages: Math.max(1, Math.ceil(demoRows.length / pageSize)),
+      filters: normalizedFilters
+    };
   }
 
   const supabase = createServerComponentClient({ cookies });
@@ -310,14 +367,49 @@ export async function getSavedLeads() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { demoMode: true, leads: sortLeadsByScore(demoLeads) };
+    return {
+      demoMode: true,
+      leads: demoRows.slice((page - 1) * pageSize, page * pageSize),
+      page,
+      pageSize,
+      total: demoRows.length,
+      totalPages: Math.max(1, Math.ceil(demoRows.length / pageSize)),
+      filters: normalizedFilters
+    };
   }
 
-  const { data: rows } = await supabase.from("leads").select("*").eq("user_id", user.id).order("created_at", {
-    ascending: false
-  });
+  let query = supabase
+    .from("leads")
+    .select(
+      "id, company_name, website, email, phone, address, city, country, source, scraper_status, duplicate_count, lead_score, lead_quality, created_at",
+      { count: "exact" }
+    )
+    .eq("user_id", user.id);
 
-  return { demoMode: false, leads: sortLeadsByScore(((rows || []) as SupabaseLeadRow[]).map(normalizeLead)) };
+  if (normalizedFilters.country) query = query.eq("country", normalizedFilters.country);
+  if (normalizedFilters.city) query = query.eq("city", normalizedFilters.city);
+  if (normalizedFilters.scraperStatus) query = query.eq("scraper_status", normalizedFilters.scraperStatus);
+  if (normalizedFilters.quality) query = query.eq("lead_quality", normalizedFilters.quality);
+  if (normalizedFilters.emailFound === "yes") query = query.neq("email", "");
+  if (normalizedFilters.emailFound === "no") query = query.or("email.is.null,email.eq.");
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const { data: rows, count } = await query
+    .order("lead_score", { ascending: false })
+    .order("created_at", { ascending: false })
+    .range(from, to);
+  const total = count || 0;
+
+  return {
+    demoMode: false,
+    leads: ((rows || []) as SupabaseLeadRow[]).map(normalizeLead),
+    page,
+    pageSize,
+    total,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    filters: normalizedFilters
+  };
 }
 
 export async function getSavedSearchResults(searchId?: string) {

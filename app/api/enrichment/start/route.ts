@@ -34,6 +34,8 @@ type CreditChargeResult = {
   remaining_credits: number;
 };
 
+const DISCOVERY_CONCURRENCY = 5;
+
 function value(row: CsvRow, column?: string) {
   return column ? row[column]?.trim() || "" : "";
 }
@@ -110,10 +112,35 @@ async function discoverMissingCompanyData(lead: Lead) {
 }
 
 async function enrichLeads(inputLeads: Lead[]) {
-  const discovered = await Promise.all(inputLeads.map(discoverMissingCompanyData));
+  const discovered = await mapWithConcurrency(inputLeads, DISCOVERY_CONCURRENCY, async (lead) => {
+    try {
+      return await discoverMissingCompanyData(lead);
+    } catch {
+      return {
+        ...lead,
+        scraper_status: lead.email || lead.website ? "found" : "failed"
+      } satisfies Lead;
+    }
+  });
   const deduped = dedupeLeads(discovered);
   const enriched = await discoverEmailsForLeads(deduped);
   return sanitizeLeadsForUsers(sortLeadsByScore(scoreLeads(dedupeLeads(enriched))));
+}
+
+async function mapWithConcurrency<T, R>(items: T[], concurrency: number, worker: (item: T) => Promise<R>) {
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+
+  async function runWorker() {
+    while (cursor < items.length) {
+      const index = cursor;
+      cursor += 1;
+      results[index] = await worker(items[index]);
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, runWorker));
+  return results;
 }
 
 function statusForLead(lead: Lead) {

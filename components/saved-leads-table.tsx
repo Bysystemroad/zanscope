@@ -1,16 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useState } from "react";
 import { Download } from "lucide-react";
 import { AddToListButton } from "@/components/add-to-list-button";
 import { LeadScoreBadge } from "@/components/lead-score-badge";
 import { Button } from "@/components/ui/button";
 import { Lead } from "@/lib/dummy-data";
 import { downloadLeadsCsv, downloadLeadsExcel } from "@/lib/lead-export";
-
-function uniqueValues(leads: Lead[], key: keyof Pick<Lead, "country" | "city" | "scraper_status">) {
-  return Array.from(new Set(leads.map((lead) => String(lead[key] || "")).filter(Boolean))).sort();
-}
 
 function enrichmentLabel(status: Lead["scraper_status"]) {
   if (status === "found") return "Enriched";
@@ -19,40 +16,56 @@ function enrichmentLabel(status: Lead["scraper_status"]) {
   return "Pending";
 }
 
-export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
-  const [country, setCountry] = useState("");
-  const [city, setCity] = useState("");
-  const [emailFound, setEmailFound] = useState("");
-  const [scraperStatus, setScraperStatus] = useState("");
-  const [quality, setQuality] = useState("");
+type SavedLeadsTableProps = {
+  leads: Lead[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  filters: {
+    country: string;
+    city: string;
+    emailFound: string;
+    scraperStatus: string;
+    quality: string;
+  };
+};
+
+function pageHref(page: number, filters: SavedLeadsTableProps["filters"]) {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  return `/dashboard/leads?${params.toString()}`;
+}
+
+export function SavedLeadsTable({ leads, page, pageSize, total, totalPages, filters }: SavedLeadsTableProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const filteredLeads = useMemo(
-    () =>
-      leads.filter((lead) => {
-        if (country && lead.country !== country) return false;
-        if (city && lead.city !== city) return false;
-        if (scraperStatus && lead.scraper_status !== scraperStatus) return false;
-        if (quality && lead.lead_quality !== quality) return false;
-        if (emailFound === "yes" && !lead.email) return false;
-        if (emailFound === "no" && lead.email) return false;
-        return true;
-      }).sort((a, b) => {
-        if (b.lead_score !== a.lead_score) return b.lead_score - a.lead_score;
-        return Date.parse(b.created_at) - Date.parse(a.created_at);
-      }),
-    [city, country, emailFound, leads, quality, scraperStatus]
-  );
+  const selectedLeads = leads.filter((lead) => selectedIds.includes(lead.id));
+  const exportRows = selectedLeads.length > 0 ? selectedLeads : leads;
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
 
-  const selectedLeads = filteredLeads.filter((lead) => selectedIds.includes(lead.id));
-  const exportRows = selectedLeads.length > 0 ? selectedLeads : filteredLeads;
+  function updateFilter(key: keyof SavedLeadsTableProps["filters"], value: string) {
+    const params = new URLSearchParams(window.location.search);
+    params.set("page", "1");
+    if (value) params.set(key, value);
+    else params.delete(key);
+    window.location.href = `/dashboard/leads?${params.toString()}`;
+  }
+
+  function submitTextFilter(key: "country" | "city", value: string) {
+    if (value.trim() !== filters[key]) updateFilter(key, value.trim());
+  }
 
   function toggleLead(id: string) {
     setSelectedIds((current) => (current.includes(id) ? current.filter((selectedId) => selectedId !== id) : [...current, id]));
   }
 
   function toggleAllVisible() {
-    const visibleIds = filteredLeads.map((lead) => lead.id);
+    const visibleIds = leads.map((lead) => lead.id);
     const allVisibleSelected = visibleIds.every((id) => selectedIds.includes(id));
     setSelectedIds((current) =>
       allVisibleSelected
@@ -70,40 +83,42 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
   }
 
   const selectClass = "h-10 rounded-md border border-white/10 bg-[#07111f] px-3 text-sm text-white shadow-sm outline-none focus:ring-2 focus:ring-white/30";
+  const inputClass = `${selectClass} min-w-0`;
 
   return (
     <div className="glass-panel rounded-2xl">
       <div className="grid gap-3 border-b border-white/8 p-4 md:grid-cols-3 xl:grid-cols-6">
-        <select className={selectClass} value={country} onChange={(event) => setCountry(event.target.value)}>
-          <option value="">All countries</option>
-          {uniqueValues(leads, "country").map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </select>
-        <select className={selectClass} value={city} onChange={(event) => setCity(event.target.value)}>
-          <option value="">All cities</option>
-          {uniqueValues(leads, "city").map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </select>
-        <select className={selectClass} value={emailFound} onChange={(event) => setEmailFound(event.target.value)}>
+        <input
+          className={inputClass}
+          placeholder="Country"
+          defaultValue={filters.country}
+          onBlur={(event) => submitTextFilter("country", event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") submitTextFilter("country", event.currentTarget.value);
+          }}
+        />
+        <input
+          className={inputClass}
+          placeholder="City"
+          defaultValue={filters.city}
+          onBlur={(event) => submitTextFilter("city", event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") submitTextFilter("city", event.currentTarget.value);
+          }}
+        />
+        <select className={selectClass} value={filters.emailFound} onChange={(event) => updateFilter("emailFound", event.target.value)}>
           <option value="">Email status</option>
           <option value="yes">Email found</option>
           <option value="no">No email</option>
         </select>
-        <select className={selectClass} value={scraperStatus} onChange={(event) => setScraperStatus(event.target.value)}>
+        <select className={selectClass} value={filters.scraperStatus} onChange={(event) => updateFilter("scraperStatus", event.target.value)}>
           <option value="">All enrichment statuses</option>
-          {uniqueValues(leads, "scraper_status").map((value) => (
-            <option key={value} value={value}>
-              {enrichmentLabel(value as Lead["scraper_status"])}
-            </option>
-          ))}
+          <option value="found">Enriched</option>
+          <option value="not_found">No contact found</option>
+          <option value="failed">Needs review</option>
+          <option value="pending">Pending</option>
         </select>
-        <select className={selectClass} value={quality} onChange={(event) => setQuality(event.target.value)}>
+        <select className={selectClass} value={filters.quality} onChange={(event) => updateFilter("quality", event.target.value)}>
           <option value="">All quality scores</option>
           <option value="High Quality">High Quality</option>
           <option value="Medium Quality">Medium Quality</option>
@@ -123,7 +138,7 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
       </div>
       <div className="flex items-center justify-between border-b border-white/8 px-4 py-3 text-sm text-muted-foreground">
         <span>
-          {filteredLeads.length} visible / {selectedLeads.length} selected
+          {from}-{to} of {total} leads / {selectedLeads.length} selected
         </span>
         <button type="button" className="font-medium text-white" onClick={toggleAllVisible}>
           Toggle visible
@@ -145,7 +160,7 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
-            {filteredLeads.map((lead) => (
+            {leads.map((lead) => (
               <tr key={lead.id} className="hover:bg-white/5">
                 <td className="px-4 py-3">
                   <input
@@ -171,6 +186,27 @@ export function SavedLeadsTable({ leads }: { leads: Lead[] }) {
             ))}
           </tbody>
         </table>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/8 px-4 py-3 text-sm text-muted-foreground">
+        <span>
+          Page {page} of {totalPages}
+        </span>
+        <div className="flex gap-2">
+          {page > 1 ? (
+            <Link className="rounded-md border border-white/10 px-3 py-2 text-white hover:bg-white/8" href={pageHref(page - 1, filters)}>
+              Previous
+            </Link>
+          ) : (
+            <span className="rounded-md border border-white/10 px-3 py-2 opacity-40">Previous</span>
+          )}
+          {page < totalPages ? (
+            <Link className="rounded-md border border-white/10 px-3 py-2 text-white hover:bg-white/8" href={pageHref(page + 1, filters)}>
+              Next
+            </Link>
+          ) : (
+            <span className="rounded-md border border-white/10 px-3 py-2 opacity-40">Next</span>
+          )}
+        </div>
       </div>
     </div>
   );
