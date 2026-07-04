@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { helpArticles, helpCategories } from "@/lib/help-content";
+import { createSeoMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Zanscope Help Center | B2B Lead Search, CSV Enrichment and Exports",
-  description: "Learn how to use Zanscope to find B2B leads, enrich CSV company lists, manage credits, build lead lists, and export to Excel or CSV."
-};
+export const metadata: Metadata = createSeoMetadata({
+  title: "Zanscope Help Center | Lead Search, CSV Enrichment and Exports",
+  description:
+    "Learn how to use Zanscope to find B2B leads, enrich CSV company lists, manage credits, build lead lists, and export to Excel or CSV.",
+  path: "/help",
+  keywords: ["Zanscope help", "B2B lead search guide", "CSV enrichment guide", "lead export guide"]
+});
 
 export default function HelpCenterPage() {
   return (

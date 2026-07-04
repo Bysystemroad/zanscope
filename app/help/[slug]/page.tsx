@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { getHelpArticle, helpArticles, type HelpArticle } from "@/lib/help-content";
 import { Button } from "@/components/ui/button";
+import { absoluteUrl, createSeoMetadata, siteName } from "@/lib/seo";
 
 export function generateStaticParams() {
   return helpArticles.map((article) => ({ slug: article.slug }));
@@ -14,15 +15,30 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const article = getHelpArticle(slug);
 
   if (!article) {
-    return {
+    return createSeoMetadata({
       title: "Zanscope Help Center",
-      description: "Helpful Zanscope guides for B2B lead search and enrichment."
-    };
+      description: "Helpful Zanscope guides for B2B lead search and enrichment.",
+      path: "/help"
+    });
   }
 
   return {
+    ...createSeoMetadata({
+      title: article.title,
+      description: article.description,
+      path: `/help/${article.slug}`,
+      keywords: [article.category, "Zanscope", "B2B lead generation", "lead enrichment"]
+    }),
     title: article.title,
-    description: article.description
+    description: article.description,
+    openGraph: {
+      title: article.title,
+      description: article.description,
+      url: absoluteUrl(`/help/${article.slug}`),
+      siteName,
+      type: "article",
+      images: [{ url: "/zanscope-logo.png", width: 1080, height: 608, alt: "Zanscope" }]
+    }
   };
 }
 
@@ -33,9 +49,62 @@ export default async function HelpArticlePage({ params }: { params: Promise<{ sl
   if (!article) notFound();
 
   const relatedArticles = article.related.map(getHelpArticle).filter((related): related is HelpArticle => Boolean(related));
+  const articleUrl = absoluteUrl(`/help/${article.slug}`);
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.description,
+    url: articleUrl,
+    author: {
+      "@type": "Organization",
+      name: siteName
+    },
+    publisher: {
+      "@type": "Organization",
+      name: siteName,
+      logo: {
+        "@type": "ImageObject",
+        url: absoluteUrl("/zanscope-logo.png")
+      }
+    },
+    mainEntityOfPage: articleUrl
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: absoluteUrl("/")
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Help Center",
+        item: absoluteUrl("/help")
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: article.h1,
+        item: articleUrl
+      }
+    ]
+  };
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <Link href="/help" className="text-sm font-medium text-[#d8e0e8] hover:text-white">
         Help Center
       </Link>

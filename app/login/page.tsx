@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import { AuthForm } from "@/components/auth-form";
+import { noIndexMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = noIndexMetadata(
+  "Login to Zanscope",
+  "Secure access to your Zanscope lead workspace."
+);
 
 export default function LoginPage() {
   return (

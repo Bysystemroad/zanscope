@@ -1,12 +1,43 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { AccountMenu } from "@/components/account-menu";
 import { BrandLogo } from "@/components/brand-logo";
+import { createSeoMetadata, siteName, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Zanscope | B2B Lead Discovery",
-  description: "Discover company leads by keyword, location, and industry."
+  metadataBase: new URL(siteUrl),
+  applicationName: siteName,
+  creator: "Zanscope",
+  publisher: "Zanscope",
+  authors: [{ name: "Zanscope" }],
+  icons: {
+    icon: "/zanscope-logo.png",
+    shortcut: "/zanscope-logo.png",
+    apple: "/zanscope-logo.png"
+  },
+  ...createSeoMetadata({
+    title: "Zanscope | B2B Lead Discovery, Enrichment and Export",
+    description:
+      "Find companies, enrich contact details, score lead quality, remove duplicates, and export clean B2B lead lists to Excel or CSV.",
+    keywords: [
+      "B2B lead discovery",
+      "lead enrichment",
+      "CSV enrichment",
+      "business leads",
+      "lead lists",
+      "Excel lead export",
+      "sales prospecting",
+      "export prospecting"
+    ]
+  })
+};
+
+export const viewport: Viewport = {
+  themeColor: "#080f14",
+  colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
 import { CreditCard, Zap } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { CreditPurchaseCards } from "@/components/credit-purchase-cards";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { noIndexMetadata } from "@/lib/seo";
 import { getUserProfile } from "@/lib/supabase/server";
+
+export const metadata: Metadata = noIndexMetadata(
+  "Zanscope Billing and Credits",
+  "Private Zanscope billing page for credit balance and credit package purchases."
+);
 
 export default async function BillingPage({
   searchParams
