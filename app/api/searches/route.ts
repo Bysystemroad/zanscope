@@ -9,6 +9,8 @@ import { dedupeLeads } from "@/lib/lead-dedupe";
 import { sanitizeLeadsForUsers } from "@/lib/lead-public";
 import { scoreLeads, sortLeadsByScore } from "@/lib/lead-scoring";
 import { searchGooglePlaces } from "@/lib/google-places";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { ensureUserProfile } from "@/lib/supabase/profile";
 
 type SearchPayload = {
@@ -108,6 +110,9 @@ export async function POST(request: Request) {
     return NextResponse.json(demoResponse);
   }
 
+  const rateLimit = checkRateLimit(request, "searches", { limit: 8, windowMs: 60_000 }, user.id);
+  if (!rateLimit.allowed) return rateLimitResponse(rateLimit.retryAfter);
+
   let profile;
 
   try {
@@ -122,6 +127,18 @@ export async function POST(request: Request) {
   }
 
   const currentCredits = profile.credits;
+  let adminSupabase: ReturnType<typeof createSupabaseAdminClient>;
+
+  try {
+    adminSupabase = createSupabaseAdminClient();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return errorResponse(500, {
+      id: fallbackId,
+      remainingCredits: currentCredits,
+      apiError: message
+    });
+  }
 
   if (currentCredits <= 0) {
     return errorResponse(402, {
@@ -201,7 +218,7 @@ export async function POST(request: Request) {
   }
 
   if (result.leads.length > 0) {
-    const { data: insertedLeads, error: leadsInsertError } = await supabase.from("leads").insert(
+    const { data: insertedLeads, error: leadsInsertError } = await adminSupabase.from("leads").insert(
       result.leads.map((lead) => ({
         user_id: user.id,
         search_id: search.id,
@@ -253,7 +270,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const { data: chargeRows, error: chargeError } = await supabase.rpc("charge_user_credits", {
+  const { data: chargeRows, error: chargeError } = await adminSupabase.rpc("charge_user_credits", {
     p_user_id: user.id,
     p_amount: creditCost.total,
     p_type: "search_debit",
@@ -268,7 +285,7 @@ export async function POST(request: Request) {
       ? `Credit charge RPC failed after saving search. Saved records were rolled back if possible: ${chargeError.message}`
       : `You need ${creditCost.total} credits. Your current balance is ${remainingCredits}. Saved records were rolled back if possible.`;
 
-    await supabase.from("searches").delete().eq("id", search.id).eq("user_id", user.id);
+    await adminSupabase.from("searches").delete().eq("id", search.id).eq("user_id", user.id);
 
     return errorResponse(chargeError ? 500 : 402, {
       id: search.id,

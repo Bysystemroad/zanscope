@@ -1,4 +1,5 @@
 import { SupabaseClient, User } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type UserProfile = {
   id: string;
@@ -24,7 +25,15 @@ function normalizeProfile(row: UserProfileRow, user: User): UserProfile {
 }
 
 export async function ensureUserProfile(supabase: SupabaseClient, user: User): Promise<UserProfile> {
-  const { data: profile, error: readError } = await supabase
+  let profileClient = supabase;
+
+  try {
+    profileClient = createSupabaseAdminClient();
+  } catch {
+    profileClient = supabase;
+  }
+
+  const { data: profile, error: readError } = await profileClient
     .from("users")
     .select("id, email, plan, credits")
     .eq("id", user.id)
@@ -38,7 +47,7 @@ export async function ensureUserProfile(supabase: SupabaseClient, user: User): P
     return normalizeProfile(profile as UserProfileRow, user);
   }
 
-  const { data: createdProfile, error: createError } = await supabase
+  const { data: createdProfile, error: createError } = await profileClient
     .from("users")
     .insert({
       id: user.id,
@@ -54,7 +63,7 @@ export async function ensureUserProfile(supabase: SupabaseClient, user: User): P
   }
 
   if (createError?.code === "23505") {
-    const { data: retryProfile, error: retryError } = await supabase
+    const { data: retryProfile, error: retryError } = await profileClient
       .from("users")
       .select("id, email, plan, credits")
       .eq("id", user.id)

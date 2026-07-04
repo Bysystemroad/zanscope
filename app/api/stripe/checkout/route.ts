@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { getCreditPackage } from "@/lib/stripe-packages";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { ensureUserProfile } from "@/lib/supabase/profile";
 
 type CheckoutPayload = {
@@ -36,6 +37,9 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Log in to buy credits." }, { status: 401 });
   }
+
+  const rateLimit = checkRateLimit(request, "stripe-checkout", { limit: 10, windowMs: 60_000 }, user.id);
+  if (!rateLimit.allowed) return rateLimitResponse(rateLimit.retryAfter);
 
   try {
     await ensureUserProfile(supabase, user);

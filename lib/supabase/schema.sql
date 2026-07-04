@@ -307,7 +307,10 @@ begin
 end;
 $$;
 
-grant execute on function public.charge_user_credits(uuid, integer, text, text) to authenticated;
+revoke execute on function public.charge_user_credits(uuid, integer, text, text) from public;
+revoke execute on function public.charge_user_credits(uuid, integer, text, text) from anon;
+revoke execute on function public.charge_user_credits(uuid, integer, text, text) from authenticated;
+grant execute on function public.charge_user_credits(uuid, integer, text, text) to service_role;
 
 create or replace function public.process_stripe_credit_purchase(
   p_user_id uuid,
@@ -377,15 +380,17 @@ on public.users for select to authenticated
 using (auth.uid() = id);
 
 drop policy if exists "Users can create own profile" on public.users;
-create policy "Users can create own profile"
+drop policy if exists "Users cannot create profiles directly" on public.users;
+create policy "Users cannot create profiles directly"
 on public.users for insert to authenticated
-with check (auth.uid() = id);
+with check (false);
 
 drop policy if exists "Users can update own profile" on public.users;
-create policy "Users can update own profile"
+drop policy if exists "Users cannot update profiles directly" on public.users;
+create policy "Users cannot update profiles directly"
 on public.users for update to authenticated
-using (auth.uid() = id)
-with check (auth.uid() = id);
+using (false)
+with check (false);
 
 drop policy if exists "Users can read own searches" on public.searches;
 create policy "Users can read own searches"
@@ -421,32 +426,17 @@ using (
 );
 
 drop policy if exists "Users can create own leads" on public.leads;
-create policy "Users can create own leads"
+drop policy if exists "Users cannot create leads directly" on public.leads;
+create policy "Users cannot create leads directly"
 on public.leads for insert to authenticated
-with check (
-  auth.uid() = user_id
-  and (
-    search_id is null
-    or exists (
-      select 1 from public.searches
-      where searches.id = leads.search_id
-        and searches.user_id = auth.uid()
-    )
-  )
-);
+with check (false);
 
 drop policy if exists "Users can update own leads" on public.leads;
-create policy "Users can update own leads"
+drop policy if exists "Users cannot update leads directly" on public.leads;
+create policy "Users cannot update leads directly"
 on public.leads for update to authenticated
-using (
-  auth.uid() = user_id
-  or exists (
-    select 1 from public.searches
-    where searches.id = leads.search_id
-      and searches.user_id = auth.uid()
-  )
-)
-with check (auth.uid() = user_id);
+using (false)
+with check (false);
 
 drop policy if exists "Users can delete own leads" on public.leads;
 create policy "Users can delete own leads"

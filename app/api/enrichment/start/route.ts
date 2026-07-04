@@ -10,6 +10,8 @@ import { searchGooglePlaces } from "@/lib/google-places";
 import { dedupeLeads } from "@/lib/lead-dedupe";
 import { sanitizeLeadsForUsers } from "@/lib/lead-public";
 import { scoreLeads, sortLeadsByScore } from "@/lib/lead-scoring";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { ensureUserProfile } from "@/lib/supabase/profile";
 
 type Mapping = {
@@ -144,6 +146,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ demoMode: true, error: "Log in to enrich your own company lists." }, { status: 401 });
   }
 
+  const rateLimit = checkRateLimit(request, "enrichment-start", { limit: 4, windowMs: 60_000 }, user.id);
+  if (!rateLimit.allowed) return rateLimitResponse(rateLimit.retryAfter);
+
   const rows = (payload.rows || []).slice(0, 100);
   const mapping = payload.mapping;
 
@@ -160,6 +165,14 @@ export async function POST(request: Request) {
   let profile;
   try {
     profile = await ensureUserProfile(supabase, user);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
+  let adminSupabase: ReturnType<typeof createSupabaseAdminClient>;
+  try {
+    adminSupabase = createSupabaseAdminClient();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
@@ -217,7 +230,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Could not save enrichment job: ${jobError?.message || "No job id returned"}` }, { status: 500 });
   }
 
-  const { data: savedLeads, error: savedLeadsError } = await supabase
+  const { data: savedLeads, error: savedLeadsError } = await adminSupabase
     .from("leads")
     .insert(
       finalLeads.map((lead) => ({
@@ -269,12 +282,12 @@ export async function POST(request: Request) {
   );
 
   if (itemError) {
-    await supabase.from("leads").delete().eq("user_id", user.id).in("id", savedLeads.map((lead) => lead.id));
+    await adminSupabase.from("leads").delete().eq("user_id", user.id).in("id", savedLeads.map((lead) => lead.id));
     await supabase.from("enrichment_jobs").delete().eq("id", job.id).eq("user_id", user.id);
     return NextResponse.json({ error: `Enrichment items could not be saved, so credits were not charged: ${itemError.message}` }, { status: 500 });
   }
 
-  const { data: chargeRows, error: chargeError } = await supabase.rpc("charge_user_credits", {
+  const { data: chargeRows, error: chargeError } = await adminSupabase.rpc("charge_user_credits", {
     p_user_id: user.id,
     p_amount: creditCost.total,
     p_type: "enrichment_debit",
@@ -284,7 +297,7 @@ export async function POST(request: Request) {
   const charge = Array.isArray(chargeRows) ? (chargeRows[0] as CreditChargeResult | undefined) : undefined;
 
   if (chargeError || !charge?.success) {
-    await supabase.from("leads").delete().eq("user_id", user.id).in("id", savedLeads.map((lead) => lead.id));
+    await adminSupabase.from("leads").delete().eq("user_id", user.id).in("id", savedLeads.map((lead) => lead.id));
     await supabase.from("enrichment_jobs").delete().eq("id", job.id).eq("user_id", user.id);
     return NextResponse.json(
       {

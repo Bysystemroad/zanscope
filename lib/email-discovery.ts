@@ -1,4 +1,5 @@
 import { Lead } from "@/lib/dummy-data";
+import { assertSafePublicHttpUrl } from "@/lib/url-security";
 
 const DISCOVERY_PATHS = [
   "",
@@ -124,15 +125,10 @@ type ScrapeResult = {
   secondary_emails: string[];
 };
 
-function normalizeWebsite(website: string) {
+async function normalizeWebsite(website: string) {
   const trimmed = website.trim();
   if (!trimmed) return null;
-
-  try {
-    return new URL(trimmed.startsWith("http") ? trimmed : `https://${trimmed}`);
-  } catch {
-    return null;
-  }
+  return assertSafePublicHttpUrl(trimmed);
 }
 
 function isDownloadUrl(url: URL) {
@@ -140,8 +136,8 @@ function isDownloadUrl(url: URL) {
   return IGNORED_FILE_EXTENSIONS.some((extension) => pathname.endsWith(extension));
 }
 
-function buildDiscoveryUrls(website: string) {
-  const baseUrl = normalizeWebsite(website);
+async function buildDiscoveryUrls(website: string) {
+  const baseUrl = await normalizeWebsite(website);
   if (!baseUrl) return [];
 
   const urls = new Map<string, string>();
@@ -160,13 +156,31 @@ async function fetchWithTimeout(url: string) {
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent": "ZanscopeLeadDiscovery/1.0",
-        Accept: "text/html,text/plain"
-      }
-    });
+    let currentUrl = await assertSafePublicHttpUrl(url);
+    if (!currentUrl) return "";
+
+    let response: Response | null = null;
+
+    for (let redirectCount = 0; redirectCount < 4; redirectCount += 1) {
+      response = await fetch(currentUrl, {
+        signal: controller.signal,
+        redirect: "manual",
+        headers: {
+          "User-Agent": "ZanscopeLeadDiscovery/1.0",
+          Accept: "text/html,text/plain"
+        }
+      });
+
+      if (![301, 302, 303, 307, 308].includes(response.status)) break;
+
+      const location = response.headers.get("location");
+      if (!location) return "";
+
+      currentUrl = await assertSafePublicHttpUrl(new URL(location, currentUrl).toString());
+      if (!currentUrl) return "";
+    }
+
+    if (!response) return "";
 
     if (!response.ok) return "";
 
@@ -244,8 +258,14 @@ function emailScore(email: string, websiteDomain: string) {
 }
 
 function websiteDomain(website: string) {
-  const url = normalizeWebsite(website);
-  return url?.hostname.toLowerCase().replace(/^www\./, "") || "";
+  try {
+    const trimmed = website.trim();
+    if (!trimmed) return "";
+    const url = new URL(trimmed.startsWith("http://") || trimmed.startsWith("https://") ? trimmed : `https://${trimmed}`);
+    return url.hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
 }
 
 function extractMailtoEmails(html: string) {
@@ -322,7 +342,7 @@ function extractLinkedInUrls(html: string) {
 }
 
 export async function discoverWebsiteEmail(website: string): Promise<ScrapeResult> {
-  const urls = buildDiscoveryUrls(website);
+  const urls = await buildDiscoveryUrls(website);
   if (urls.length === 0) {
     return { email: "", phone: "", address: "", linkedin_url: "", secondary_emails: [], scraper_status: "failed" };
   }
