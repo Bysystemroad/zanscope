@@ -51,8 +51,6 @@ const MAX_PAGES_PER_COMPANY = 28;
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 const PHONE_REGEX = /(?:\+|00)?(?:[\d][\s()./-]?){7,18}\d/g;
 const MAILTO_REGEX = /mailto:([^"'?#\s>]+)/gi;
-const HREF_REGEX = /href=["']([^"']+)["']/gi;
-const LINKEDIN_REGEX = /https?:\/\/(?:[a-z]{2,3}\.)?linkedin\.com\/company\/[a-zA-Z0-9_.%-]+\/?/gi;
 const ADDRESS_HINT_REGEX =
   /(?:address|adresse|indirizzo|anschrift|sede|registered office|headquarters|adresse du siege)[\s\S]{0,360}/gi;
 
@@ -120,7 +118,6 @@ type ScrapeResult = {
   email: string;
   phone: string;
   address: string;
-  linkedin_url: string;
   scraper_status: Lead["scraper_status"];
   secondary_emails: string[];
 };
@@ -315,43 +312,16 @@ function extractAddresses(html: string) {
   return [...structured, ...hinted].filter((address) => address.length >= 18 && /\d/.test(address));
 }
 
-function normalizeLinkedInUrl(value: string) {
-  try {
-    const url = new URL(value.startsWith("http") ? value : `https://${value}`);
-    const path = url.pathname.toLowerCase();
-
-    if (!url.hostname.toLowerCase().includes("linkedin.com")) return "";
-    if (!path.startsWith("/company/")) return "";
-    if (path.includes("/in/") || path.includes("/pub/") || path.includes("/profile/")) return "";
-    if (path.includes("/sharearticle") || path.includes("/login") || path.includes("/search") || path.includes("/feed")) return "";
-
-    url.protocol = "https:";
-    url.hostname = "www.linkedin.com";
-    url.search = "";
-    url.hash = "";
-    return url.toString();
-  } catch {
-    return "";
-  }
-}
-
-function extractLinkedInUrls(html: string) {
-  const direct = html.match(LINKEDIN_REGEX) || [];
-  const hrefs = [...html.matchAll(HREF_REGEX)].map((match) => htmlDecode(match[1] || ""));
-  return [...new Set([...direct, ...hrefs].map(normalizeLinkedInUrl).filter(Boolean))];
-}
-
 export async function discoverWebsiteEmail(website: string): Promise<ScrapeResult> {
   const urls = await buildDiscoveryUrls(website);
   if (urls.length === 0) {
-    return { email: "", phone: "", address: "", linkedin_url: "", secondary_emails: [], scraper_status: "failed" };
+    return { email: "", phone: "", address: "", secondary_emails: [], scraper_status: "failed" };
   }
 
   let visitedAnyPage = false;
   const emails = new Set<string>();
   const phones = new Set<string>();
   const addresses = new Set<string>();
-  const linkedInUrls = new Set<string>();
 
   for (const url of urls) {
     try {
@@ -362,7 +332,6 @@ export async function discoverWebsiteEmail(website: string): Promise<ScrapeResul
       extractEmails(html, website).forEach((email) => emails.add(email));
       extractPhones(html).forEach((phone) => phones.add(phone));
       extractAddresses(html).forEach((address) => addresses.add(address));
-      extractLinkedInUrls(html).forEach((linkedinUrl) => linkedInUrls.add(linkedinUrl));
     } catch {
       continue;
     }
@@ -375,9 +344,8 @@ export async function discoverWebsiteEmail(website: string): Promise<ScrapeResul
     email,
     phone: [...phones][0] || "",
     address: [...addresses][0] || "",
-    linkedin_url: [...linkedInUrls][0] || "",
     secondary_emails: rankedEmails.slice(1, 6),
-    scraper_status: email || phones.size > 0 || addresses.size > 0 || linkedInUrls.size > 0 ? "found" : visitedAnyPage ? "not_found" : "failed"
+    scraper_status: email || phones.size > 0 || addresses.size > 0 ? "found" : visitedAnyPage ? "not_found" : "failed"
   };
 }
 
@@ -401,15 +369,13 @@ export async function discoverEmailsForLeads(leads: Lead[], concurrency = BULK_C
       const email = lead.email || result.email;
       const phone = lead.phone || result.phone;
       const address = lead.address || result.address;
-      const linkedinUrl = lead.linkedin_url || result.linkedin_url;
 
       enrichedLeads[index] = {
         ...lead,
         email,
         phone,
         address,
-        linkedin_url: linkedinUrl,
-        scraper_status: email || phone || address || linkedinUrl ? "found" : result.scraper_status
+        scraper_status: email || phone || address ? "found" : result.scraper_status
       };
     }
   }

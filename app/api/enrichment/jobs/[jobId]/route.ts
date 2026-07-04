@@ -48,7 +48,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ job
       email: item.email || "",
       phone: item.phone || "",
       address: item.address || "",
-      linkedin_url: item.linkedin_url || "",
       city: item.city || "",
       country: item.country || "",
       source: "Zanscope",

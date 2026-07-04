@@ -47,7 +47,6 @@ create table if not exists public.leads (
   email text,
   phone text,
   address text,
-  linkedin_url text,
   city text,
   country text,
   industry text,
@@ -67,7 +66,6 @@ alter table public.leads add column if not exists website text;
 alter table public.leads add column if not exists email text;
 alter table public.leads add column if not exists phone text;
 alter table public.leads add column if not exists address text;
-alter table public.leads add column if not exists linkedin_url text;
 alter table public.leads add column if not exists city text;
 alter table public.leads add column if not exists country text;
 alter table public.leads add column if not exists industry text;
@@ -216,7 +214,6 @@ create table if not exists public.enrichment_job_items (
   email text,
   phone text,
   address text,
-  linkedin_url text,
   city text,
   country text,
   lead_score integer not null default 0,
@@ -237,7 +234,6 @@ alter table public.enrichment_job_items add column if not exists website text;
 alter table public.enrichment_job_items add column if not exists email text;
 alter table public.enrichment_job_items add column if not exists phone text;
 alter table public.enrichment_job_items add column if not exists address text;
-alter table public.enrichment_job_items add column if not exists linkedin_url text;
 alter table public.enrichment_job_items add column if not exists city text;
 alter table public.enrichment_job_items add column if not exists country text;
 alter table public.enrichment_job_items add column if not exists lead_score integer not null default 0;

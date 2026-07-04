@@ -18,7 +18,6 @@ const BLOCKED_TERMS = [
   "wikipedia",
   "facebook",
   "instagram",
-  "linkedin",
   "youtube",
   "pinterest",
   "reddit",
@@ -52,7 +51,6 @@ const COMPANY_SIGNALS = [
 const BLOCKED_HOST_PARTS = [
   "facebook.",
   "instagram.",
-  "linkedin.",
   "youtube.",
   "youtu.be",
   "pinterest.",

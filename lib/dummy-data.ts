@@ -5,7 +5,6 @@ export type Lead = {
   email: string;
   phone: string;
   address: string;
-  linkedin_url?: string;
   city: string;
   country: string;
   source: string;
