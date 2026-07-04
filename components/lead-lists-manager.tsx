@@ -73,12 +73,14 @@ export function LeadListsManager({ initialLists }: { initialLists: LeadListRecor
           <input
             className="h-10 rounded-md border border-white/10 bg-[#07111f] px-3 text-sm text-white outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-white/30"
             placeholder="List name"
+            aria-label="List name"
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
           <input
             className="h-10 rounded-md border border-white/10 bg-[#07111f] px-3 text-sm text-white outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-white/30"
             placeholder="Description"
+            aria-label="List description"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
           />
@@ -116,10 +118,10 @@ export function LeadListsManager({ initialLists }: { initialLists: LeadListRecor
                       <Link href={`/dashboard/lists/${list.id}`} className="inline-flex h-9 items-center gap-2 rounded-md border border-white/12 bg-white/4 px-3 text-sm font-medium text-white hover:bg-white/10">
                         Open <ArrowUpRight className="h-4 w-4" />
                       </Link>
-                      <Button type="button" variant="ghost" className="h-9 px-3" onClick={() => renameList(list)}>
+                      <Button type="button" variant="ghost" className="h-9 px-3" aria-label={`Rename ${list.name}`} onClick={() => renameList(list)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button type="button" variant="ghost" className="h-9 px-3" onClick={() => deleteList(list)}>
+                      <Button type="button" variant="ghost" className="h-9 px-3" aria-label={`Delete ${list.name}`} onClick={() => deleteList(list)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

@@ -91,6 +91,7 @@ export function SavedLeadsTable({ leads, page, pageSize, total, totalPages, filt
         <input
           className={inputClass}
           placeholder="Country"
+          aria-label="Filter leads by country"
           defaultValue={filters.country}
           onBlur={(event) => submitTextFilter("country", event.target.value)}
           onKeyDown={(event) => {
@@ -100,25 +101,26 @@ export function SavedLeadsTable({ leads, page, pageSize, total, totalPages, filt
         <input
           className={inputClass}
           placeholder="City"
+          aria-label="Filter leads by city"
           defaultValue={filters.city}
           onBlur={(event) => submitTextFilter("city", event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter") submitTextFilter("city", event.currentTarget.value);
           }}
         />
-        <select className={selectClass} value={filters.emailFound} onChange={(event) => updateFilter("emailFound", event.target.value)}>
+        <select className={selectClass} value={filters.emailFound} aria-label="Filter leads by email status" onChange={(event) => updateFilter("emailFound", event.target.value)}>
           <option value="">Email status</option>
           <option value="yes">Email found</option>
           <option value="no">No email</option>
         </select>
-        <select className={selectClass} value={filters.scraperStatus} onChange={(event) => updateFilter("scraperStatus", event.target.value)}>
+        <select className={selectClass} value={filters.scraperStatus} aria-label="Filter leads by enrichment status" onChange={(event) => updateFilter("scraperStatus", event.target.value)}>
           <option value="">All enrichment statuses</option>
           <option value="found">Enriched</option>
           <option value="not_found">No contact found</option>
           <option value="failed">Needs review</option>
           <option value="pending">Pending</option>
         </select>
-        <select className={selectClass} value={filters.quality} onChange={(event) => updateFilter("quality", event.target.value)}>
+        <select className={selectClass} value={filters.quality} aria-label="Filter leads by quality score" onChange={(event) => updateFilter("quality", event.target.value)}>
           <option value="">All quality scores</option>
           <option value="High Quality">High Quality</option>
           <option value="Medium Quality">Medium Quality</option>
