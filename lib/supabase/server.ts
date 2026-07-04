@@ -48,6 +48,19 @@ type SupabaseLeadListRow = {
   updated_at: string;
 };
 
+export type DashboardStats = {
+  totalSearches: number;
+  companiesFound: number;
+  companiesEnriched: number;
+  emailsFound: number;
+  creditsUsed: number;
+  savedLeads: number;
+  leadLists: number;
+  averageLeadScore: number;
+  enrichmentJobs: number;
+  recentSearches: SearchHistoryRecord[];
+};
+
 export function isServerSupabaseConfigured() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 }
@@ -102,6 +115,91 @@ export async function getUserProfile(): Promise<UserProfileRecord> {
       error: message
     };
   }
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const emptyStats: DashboardStats = {
+    totalSearches: 0,
+    companiesFound: 0,
+    companiesEnriched: 0,
+    emailsFound: 0,
+    creditsUsed: 0,
+    savedLeads: 0,
+    leadLists: 0,
+    averageLeadScore: 0,
+    enrichmentJobs: 0,
+    recentSearches: []
+  };
+
+  if (!isServerSupabaseConfigured()) {
+    return emptyStats;
+  }
+
+  const supabase = createServerComponentClient({ cookies });
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return emptyStats;
+  }
+
+  const [
+    searchesResult,
+    recentSearchesResult,
+    leadsResult,
+    transactionsResult,
+    leadListsResult,
+    enrichmentJobsResult
+  ] = await Promise.all([
+    supabase.from("searches").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    supabase
+      .from("searches")
+      .select("id, keyword, country, city, industry, status, credit_cost, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase.from("leads").select("id, email, scraper_status, lead_score").eq("user_id", user.id),
+    supabase.from("credit_transactions").select("amount, type").eq("user_id", user.id),
+    supabase.from("lead_lists").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    supabase.from("enrichment_jobs").select("id", { count: "exact", head: true }).eq("user_id", user.id)
+  ]);
+
+  const leads = (leadsResult.data || []) as Array<{ email?: string | null; scraper_status?: string | null; lead_score?: number | null }>;
+  const transactions = (transactionsResult.data || []) as Array<{ amount?: number | null; type?: string | null }>;
+  const recentRows = (recentSearchesResult.data || []) as SupabaseSearchRow[];
+  const companiesFound = leads.length;
+  const scoredLeads = leads.filter((lead) => typeof lead.lead_score === "number");
+
+  return {
+    totalSearches: searchesResult.count || 0,
+    companiesFound,
+    companiesEnriched: leads.filter((lead) => lead.scraper_status === "found").length,
+    emailsFound: leads.filter((lead) => Boolean(lead.email)).length,
+    creditsUsed: Math.abs(
+      transactions
+        .filter((transaction) => (transaction.amount || 0) < 0)
+        .reduce((sum, transaction) => sum + (transaction.amount || 0), 0)
+    ),
+    savedLeads: companiesFound,
+    leadLists: leadListsResult.count || 0,
+    averageLeadScore: scoredLeads.length
+      ? Math.round(scoredLeads.reduce((sum, lead) => sum + (lead.lead_score || 0), 0) / scoredLeads.length)
+      : 0,
+    enrichmentJobs: enrichmentJobsResult.count || 0,
+    recentSearches: recentRows.map((search) => ({
+      id: search.id,
+      keyword: search.keyword,
+      country: search.country || "",
+      city: search.city || "",
+      industry: search.industry || "",
+      status: search.status,
+      created_at: search.created_at,
+      leads: 0,
+      lead_count: 0,
+      credit_cost: search.credit_cost || 0
+    }))
+  };
 }
 
 function demoLeadLists(): LeadListRecord[] {

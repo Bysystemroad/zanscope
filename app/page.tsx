@@ -445,6 +445,7 @@ export default function LandingPage() {
           <div className="flex flex-wrap gap-4">
             <a href="#" className="hover:text-white">Product</a>
             <a href="#" className="hover:text-white">Solutions</a>
+            <Link href="/help" className="hover:text-white">Help Center</Link>
             <Link href="/billing" className="hover:text-white">Pricing</Link>
             <a href="#" className="hover:text-white">Roadmap</a>
             <a href="#" className="hover:text-white">Privacy</a>
