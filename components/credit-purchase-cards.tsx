@@ -68,7 +68,12 @@ export function CreditPurchaseCards({
                 <Zap className="h-5 w-5" />
               </div>
             </div>
-            <div className="mt-6 text-3xl font-semibold text-white">{item.credits.toLocaleString()} credits</div>
+            <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
+              <div className="text-3xl font-semibold text-white">{item.credits.toLocaleString()} credits</div>
+              <div className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-sm font-semibold text-[#d8e0e8]">
+                {item.priceLabel}
+              </div>
+            </div>
             <Button
               type="button"
               className="mt-6 w-full"
