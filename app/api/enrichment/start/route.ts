@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { searchApifyGoogle } from "@/lib/apify-search";
 import { calculateLeadCreditCost } from "@/lib/credits";
 import { VERIFIED_ACCOUNT_REQUIRED_MESSAGE, isEmailVerified } from "@/lib/auth-security";
@@ -14,6 +12,7 @@ import { scoreLeads, sortLeadsByScore } from "@/lib/lead-scoring";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { ensureUserProfile } from "@/lib/supabase/profile";
+import { createSupabaseServerClient } from "@/lib/supabase/ssr";
 
 type Mapping = {
   companyName: string;
@@ -165,7 +164,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ demoMode: true, error: "Log in to enrich your own company lists." }, { status: 401 });
   }
 
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

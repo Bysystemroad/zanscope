@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import {
   SIGNUP_BONUS_PENDING_MESSAGE,
   isEmailVerified,
@@ -13,6 +11,7 @@ import {
   signupDeviceCookieHeader
 } from "@/lib/signup-rate-limit";
 import { createPendingSignupProfile } from "@/lib/supabase/profile";
+import { createSupabaseServerClient } from "@/lib/supabase/ssr";
 
 type SignupPayload = {
   email?: string;
@@ -53,7 +52,7 @@ export async function POST(request: Request) {
     return responseWithDeviceCookie({ error: message }, 500, deviceId);
   }
 
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signUp({ email, password });
 
   if (error) {

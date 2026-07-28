@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { discoverEmailsForLeads } from "@/lib/email-discovery";
 import { dedupeLeads } from "@/lib/lead-dedupe";
 import { scoreLeads } from "@/lib/lead-scoring";
@@ -8,6 +6,7 @@ import { Lead } from "@/lib/dummy-data";
 import { VERIFIED_ACCOUNT_REQUIRED_MESSAGE, isEmailVerified } from "@/lib/auth-security";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { assertSafePublicHttpUrl } from "@/lib/url-security";
+import { createSupabaseServerClient } from "@/lib/supabase/ssr";
 
 const MAX_LEADS_PER_REQUEST = 25;
 const MAX_TEXT_LENGTH = 300;
@@ -26,7 +25,7 @@ function cleanLead(lead: Lead) {
 }
 
 export async function POST(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

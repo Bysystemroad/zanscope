@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { VERIFIED_ACCOUNT_REQUIRED_MESSAGE, isEmailVerified } from "@/lib/auth-security";
+import { createSupabaseServerClient } from "@/lib/supabase/ssr";
 
 async function getUser() {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
   return { supabase, user };
 }
 
-async function ownedLeadIds(supabase: ReturnType<typeof createRouteHandlerClient>, userId: string, leadIds: string[]) {
+async function ownedLeadIds(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, userId: string, leadIds: string[]) {
   if (leadIds.length === 0) return [];
 
   const { data: leads } = await supabase.from("leads").select("id").eq("user_id", userId).in("id", leadIds);

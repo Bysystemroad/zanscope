@@ -26,7 +26,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           <BrandLogo href="/dashboard" />
         </div>
         <div className="mb-3 rounded-lg border border-white/10 bg-white/6 p-3">
-          <AccountMenu />
+          <AccountMenu initialAccount={!userProfile.demoMode ? { email: userProfile.email } : null} />
         </div>
         <div className="mb-3 rounded-lg border border-white/10 bg-white/6 p-3">
           <div className="text-xs font-medium uppercase text-muted-foreground">Credits</div>

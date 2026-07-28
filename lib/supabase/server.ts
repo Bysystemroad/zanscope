@@ -1,8 +1,7 @@
-import { cookies } from "next/headers";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Lead, leads as demoLeads, searches as demoSearches, SearchRecord } from "@/lib/dummy-data";
-import { authTrace } from "@/lib/auth-trace";
+import { sessionLoopTrace } from "@/lib/session-loop-trace";
 import { ensureUserProfile } from "@/lib/supabase/profile";
+import { createSupabaseServerClient } from "@/lib/supabase/ssr";
 
 export type SearchHistoryRecord = SearchRecord & {
   lead_count: number;
@@ -104,12 +103,13 @@ export async function getUserProfile(): Promise<UserProfileRecord> {
     };
   }
 
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
 
-  authTrace("server.get_user_profile.auth_result", {
+  sessionLoopTrace("server.get_user_profile.auth_result", {
+    pathname: "profile-read",
     hasUser: Boolean(user),
     userId: user?.id || null
   });
@@ -125,7 +125,8 @@ export async function getUserProfile(): Promise<UserProfileRecord> {
 
   try {
     const profile = await ensureUserProfile(supabase, user);
-    authTrace("server.get_user_profile.profile_result", {
+    sessionLoopTrace("server.get_user_profile.profile_result", {
+      pathname: "profile-read",
       userId: user.id,
       profileFound: true,
       error: null
@@ -138,7 +139,8 @@ export async function getUserProfile(): Promise<UserProfileRecord> {
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    authTrace("server.get_user_profile.profile_result", {
+    sessionLoopTrace("server.get_user_profile.profile_result", {
+      pathname: "profile-read",
       userId: user.id,
       profileFound: false,
       error: message
@@ -171,7 +173,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     return emptyStats;
   }
 
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -319,7 +321,7 @@ export async function getSearchHistory() {
     return { demoMode: true, searches: demoHistory() };
   }
 
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -377,7 +379,7 @@ export async function getSavedLeads(filters: SavedLeadsFilters = {}): Promise<Sa
     };
   }
 
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -433,7 +435,7 @@ export async function getSavedSearchResults(searchId?: string) {
     return { demoMode: true, search: undefined, leads: sortLeadsByScore(demoLeads) };
   }
 
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -481,7 +483,7 @@ export async function getLeadLists() {
     return { demoMode: true, lists: demoLeadLists() };
   }
 
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -524,7 +526,7 @@ export async function getLeadListDetail(listId?: string) {
     return { demoMode: true, list: demoLeadLists()[0], leads: sortLeadsByScore(demoLeads) };
   }
 
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AccountMenu } from "@/components/account-menu";
 import { BrandLogo } from "@/components/brand-logo";
 import { createSeoMetadata, siteName, siteUrl } from "@/lib/seo";
+import { getServerAccount } from "@/lib/supabase/ssr";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -40,7 +41,9 @@ export const viewport: Viewport = {
   initialScale: 1
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const serverAccount = await getServerAccount("root-layout");
+
   return (
     <html lang="en">
       <body className="min-h-screen antialiased">
@@ -55,7 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/lists" className="hover:text-white">Lists</Link>
                 <Link href="/billing" className="hover:text-white">Billing</Link>
               </nav>
-              <AccountMenu />
+              <AccountMenu initialAccount={serverAccount} />
             </div>
           </header>
           {children}

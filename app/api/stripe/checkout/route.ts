@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { getCreditPackage } from "@/lib/stripe-packages";
 import { VERIFIED_ACCOUNT_REQUIRED_MESSAGE, isEmailVerified } from "@/lib/auth-security";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { ensureUserProfile } from "@/lib/supabase/profile";
+import { createSupabaseServerClient } from "@/lib/supabase/ssr";
 
 type CheckoutPayload = {
   packageKey?: string;
@@ -30,7 +29,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Credit purchases are not configured yet." }, { status: 500 });
   }
 
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

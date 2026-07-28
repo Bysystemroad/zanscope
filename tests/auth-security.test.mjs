@@ -17,6 +17,8 @@ const accountMenuSource = fs.readFileSync(new URL("../components/account-menu.ts
 const middlewareSource = fs.readFileSync(new URL("../middleware.ts", import.meta.url), "utf8");
 const rootLayoutSource = fs.readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const appShellSource = fs.readFileSync(new URL("../components/app-shell.tsx", import.meta.url), "utf8");
+const browserClientSource = fs.readFileSync(new URL("../lib/supabase/client.ts", import.meta.url), "utf8");
+const serverSsrSource = fs.readFileSync(new URL("../lib/supabase/ssr.ts", import.meta.url), "utf8");
 
 test("new verified signup bonus is exactly 50 credits", () => {
   assert.equal(SIGNUP_BONUS_CREDITS, 50);
@@ -69,19 +71,36 @@ test("email validation normalizes and rejects malformed email addresses", () => 
 });
 
 test("protected routes reject unverified users in middleware", () => {
-  assert.match(middlewareSource, /hasVerifiedSession/);
-  assert.match(middlewareSource, /isProtectedPage && !hasVerifiedSession/);
+  assert.match(middlewareSource, /hasVerifiedUser/);
+  assert.match(middlewareSource, /isProtectedPage && !hasVerifiedUser/);
 });
 
 test("middleware redirects preserve refreshed auth cookies", () => {
   assert.match(middlewareSource, /redirectWithAuthCookies/);
   assert.match(middlewareSource, /response\.cookies\.getAll\(\)\.forEach/);
+  assert.match(middlewareSource, /request\.cookies\.set\(name, value\)/);
+  assert.match(middlewareSource, /response = NextResponse\.next\(\{ request \}\)/);
 });
 
 test("account menu does not clear a valid user except on explicit sign out", () => {
   assert.match(accountMenuSource, /event === "SIGNED_OUT"/);
   assert.match(accountMenuSource, /setAccount\(null\)/);
   assert.doesNotMatch(accountMenuSource, /setAccount\(session\?\.user\.email \? \{ email: session\.user\.email \} : null\)/);
+});
+
+test("browser and server auth use the Supabase SSR client family", () => {
+  assert.match(browserClientSource, /createBrowserClient/);
+  assert.match(serverSsrSource, /createServerClient/);
+  assert.match(middlewareSource, /createServerClient/);
+  assert.doesNotMatch(browserClientSource, /createClientComponentClient/);
+  assert.doesNotMatch(middlewareSource, /createMiddlewareClient/);
+});
+
+test("header receives server-authenticated account as initial state", () => {
+  assert.match(rootLayoutSource, /getServerAccount\("root-layout"\)/);
+  assert.match(rootLayoutSource, /<AccountMenu initialAccount=\{serverAccount\}/);
+  assert.match(accountMenuSource, /initialAccount/);
+  assert.match(accountMenuSource, /useState<AccountState \| null>\(initialAccount\)/);
 });
 
 test("UI displays 50 free credits instead of 100", () => {
@@ -96,9 +115,11 @@ test("signup confirmation explains email verification before credits", () => {
   assert.match(SIGNUP_BONUS_PENDING_MESSAGE, /50 free credits/i);
 });
 
-test("auth redirect uses explicit dashboard navigation after verified success", () => {
-  assert.match(authCopy, /window\.location\.assign\("\/dashboard"\)/);
+test("auth redirect uses app-router navigation after verified success", () => {
+  assert.match(authCopy, /router\.replace\("\/dashboard"\)/);
+  assert.match(authCopy, /router\.refresh\(\)/);
   assert.match(authCopy, /\[LOGIN-REDIRECT-TRACE\]/);
+  assert.doesNotMatch(authCopy, /window\.location\.assign\("\/dashboard"\)/);
   assert.doesNotMatch(authCopy, /window\.location\.replace\("\/dashboard"\)/);
 });
 

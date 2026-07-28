@@ -10,12 +10,17 @@ import { supabase } from "@/lib/supabase/client";
 
 type AccountState = {
   email: string;
+  userId?: string;
 };
 
-export function AccountMenu() {
+type AccountMenuProps = {
+  initialAccount?: AccountState | null;
+};
+
+export function AccountMenu({ initialAccount = null }: AccountMenuProps) {
   const router = useRouter();
-  const [account, setAccount] = useState<AccountState | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [account, setAccount] = useState<AccountState | null>(initialAccount);
+  const [loading, setLoading] = useState(!initialAccount);
 
   useEffect(() => {
     if (!supabase) {
@@ -30,6 +35,7 @@ export function AccountMenu() {
       if (!mounted) return;
 
       authTrace("account_menu.initial_session", {
+        pathname: typeof window !== "undefined" ? window.location.pathname : "unknown",
         hasSession: Boolean(data.session),
         userId: data.session?.user.id || null,
         emailVerified: data.session?.user ? isEmailVerified(data.session.user) : false,
@@ -49,6 +55,7 @@ export function AccountMenu() {
       if (!mounted) return;
 
       authTrace("account_menu.get_user", {
+        pathname: typeof window !== "undefined" ? window.location.pathname : "unknown",
         hasUser: Boolean(user),
         userId: user?.id || null,
         emailVerified: user ? isEmailVerified(user) : false,
@@ -56,9 +63,9 @@ export function AccountMenu() {
       });
 
       if (user?.email && isEmailVerified(user)) {
-        setAccount({ email: user.email });
+        setAccount({ email: user.email, userId: user.id });
       } else if (!data.session) {
-        setAccount(null);
+        setAccount((current) => current);
       }
 
       setLoading(false);
@@ -68,6 +75,7 @@ export function AccountMenu() {
       data: { subscription }
     } = authClient.auth.onAuthStateChange((event, session) => {
       authTrace("account_menu.auth_state_change", {
+        pathname: typeof window !== "undefined" ? window.location.pathname : "unknown",
         event,
         hasSession: Boolean(session),
         userId: session?.user.id || null,
@@ -85,7 +93,7 @@ export function AccountMenu() {
       }
 
       if (session?.user.email && isEmailVerified(session.user)) {
-        setAccount({ email: session.user.email });
+        setAccount({ email: session.user.email, userId: session.user.id });
       } else if (session) {
         authTrace("account_menu.preserve_state", {
           reason: "session_present_but_not_confirmed_in_event",
@@ -96,6 +104,7 @@ export function AccountMenu() {
           reason: "non_signout_null_session_event",
           event
         });
+        setAccount((current) => current);
       }
 
       setLoading(false);

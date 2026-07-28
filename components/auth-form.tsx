@@ -43,6 +43,10 @@ export function AuthForm() {
         loading
       });
 
+      router.replace("/dashboard");
+      router.refresh();
+      loginRedirectTrace("after_router_replace_call", { source, pathname });
+
       if (typeof window !== "undefined") {
         window.setTimeout(() => {
           loginRedirectTrace("pathname_100ms_after_redirect", {
@@ -65,18 +69,7 @@ export function AuthForm() {
             loading
           });
         }, 1500);
-
-        window.location.assign("/dashboard");
-        loginRedirectTrace("after_window_location_assign_call", {
-          source,
-          pathname: window.location.pathname
-        });
-        return;
       }
-
-      router.replace("/dashboard");
-      router.refresh();
-      loginRedirectTrace("after_router_replace_call", { source, pathname });
     },
     [loading, pathname, router]
   );

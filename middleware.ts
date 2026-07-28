@@ -1,33 +1,66 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { authTrace } from "@/lib/auth-trace";
 import { isEmailVerified } from "@/lib/auth-security";
+import { sessionLoopTrace } from "@/lib/session-loop-trace";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next();
+  let response = NextResponse.next({ request });
   const host = request.nextUrl.hostname;
+  const { pathname } = request.nextUrl;
+  const authCookieNames = request.cookies
+    .getAll()
+    .map((cookie) => cookie.name)
+    .filter((name) => name.startsWith("sb-") || name.includes("supabase"));
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    sessionLoopTrace("middleware.env_missing", {
+      host,
+      pathname,
+      authCookieCount: authCookieNames.length
+    });
     return response;
   }
 
-  const supabase = createMiddlewareClient({ req: request, res: response });
-  const {
-    data: { session }
-  } = await supabase.auth.getSession();
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => {
+          request.cookies.set(name, value);
+        });
 
-  const { pathname } = request.nextUrl;
+        response = NextResponse.next({ request });
+
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
+      }
+    }
+  });
+
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser();
+
   if (host === "zanscope.com") {
     const canonicalUrl = request.nextUrl.clone();
     canonicalUrl.hostname = "www.zanscope.com";
 
-    authTrace("middleware.redirect", {
+    sessionLoopTrace("middleware.redirect", {
+      host,
       pathname,
-      userId: session?.user.id || null,
-      emailVerified: session?.user ? isEmailVerified(session.user) : false,
+      authCookieCount: authCookieNames.length,
+      userId: user?.id || null,
+      emailVerified: user ? isEmailVerified(user) : false,
       destination: canonicalUrl.toString(),
       reason: "canonical_www",
-      refreshedCookies: response.cookies.getAll().length
+      cookiesCopied: response.cookies.getAll().length
     });
 
     return redirectWithAuthCookies(canonicalUrl, response);
@@ -44,40 +77,46 @@ export async function middleware(request: NextRequest) {
     pathname === "/lists" ||
     pathname.startsWith("/lists/") ||
     (pathname.startsWith("/search/") && !isSearchDemoPage);
-  const hasVerifiedSession = Boolean(session && isEmailVerified(session.user));
+  const hasVerifiedUser = Boolean(user && isEmailVerified(user));
 
-  authTrace("middleware.session_check", {
+  sessionLoopTrace("middleware.auth_result", {
+    host,
     pathname,
-    userId: session?.user.id || null,
-    hasSession: Boolean(session),
-    hasVerifiedSession,
-    emailVerified: session?.user ? isEmailVerified(session.user) : false,
-    refreshedCookies: response.cookies.getAll().length,
-    response: isAuthPage && hasVerifiedSession ? "redirect" : isProtectedPage && !hasVerifiedSession ? "redirect" : "next"
+    authCookieCount: authCookieNames.length,
+    getUserError: error?.message || null,
+    userId: user?.id || null,
+    hasUser: Boolean(user),
+    emailVerified: user ? isEmailVerified(user) : false,
+    redirectDecision: isAuthPage && hasVerifiedUser ? "dashboard" : isProtectedPage && !hasVerifiedUser ? "login" : "next",
+    cookiesCopied: response.cookies.getAll().length
   });
 
-  if (isAuthPage && hasVerifiedSession) {
+  if (isAuthPage && hasVerifiedUser) {
     const destination = new URL("/dashboard", request.url);
-    authTrace("middleware.redirect", {
+    sessionLoopTrace("middleware.redirect", {
+      host,
       pathname,
-      userId: session?.user.id || null,
-      emailVerified: session?.user ? isEmailVerified(session.user) : false,
+      authCookieCount: authCookieNames.length,
+      userId: user?.id || null,
+      emailVerified: user ? isEmailVerified(user) : false,
       destination: destination.toString(),
       reason: "verified_user_on_login",
-      refreshedCookies: response.cookies.getAll().length
+      cookiesCopied: response.cookies.getAll().length
     });
     return redirectWithAuthCookies(destination, response);
   }
 
-  if (isProtectedPage && !hasVerifiedSession) {
+  if (isProtectedPage && !hasVerifiedUser) {
     const destination = new URL("/login", request.url);
-    authTrace("middleware.redirect", {
+    sessionLoopTrace("middleware.redirect", {
+      host,
       pathname,
-      userId: session?.user.id || null,
-      emailVerified: session?.user ? isEmailVerified(session.user) : false,
+      authCookieCount: authCookieNames.length,
+      userId: user?.id || null,
+      emailVerified: user ? isEmailVerified(user) : false,
       destination: destination.toString(),
       reason: "missing_verified_session",
-      refreshedCookies: response.cookies.getAll().length
+      cookiesCopied: response.cookies.getAll().length
     });
     return redirectWithAuthCookies(destination, response);
   }

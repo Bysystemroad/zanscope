@@ -1,5 +1,5 @@
 import { SupabaseClient, User } from "@supabase/supabase-js";
-import { authTrace } from "@/lib/auth-trace";
+import { sessionLoopTrace } from "@/lib/session-loop-trace";
 import { SIGNUP_BONUS_CREDITS, isEmailVerified } from "@/lib/auth-security";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -38,7 +38,7 @@ async function maybeGrantSignupBonus(profileClient: SupabaseClient, user: User) 
     p_amount: SIGNUP_BONUS_CREDITS
   });
 
-  authTrace("profile.signup_bonus_rpc", {
+  sessionLoopTrace("profile.signup_bonus_rpc", {
     userId: user.id,
     emailVerified: true,
     error: error?.message || null

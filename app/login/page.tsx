@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { AuthForm } from "@/components/auth-form";
 import { isEmailVerified } from "@/lib/auth-security";
 import { noIndexMetadata } from "@/lib/seo";
 import { isServerSupabaseConfigured } from "@/lib/supabase/server";
+import { createSupabaseServerClient } from "@/lib/supabase/ssr";
 
 export const metadata: Metadata = noIndexMetadata(
   "Login to Zanscope",
@@ -16,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
   if (isServerSupabaseConfigured()) {
-    const supabase = createServerComponentClient({ cookies });
+    const supabase = await createSupabaseServerClient();
     const {
       data: { user }
     } = await supabase.auth.getUser();
