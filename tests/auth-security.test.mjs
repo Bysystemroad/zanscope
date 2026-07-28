@@ -96,9 +96,9 @@ test("signup confirmation explains email verification before credits", () => {
   assert.match(SIGNUP_BONUS_PENDING_MESSAGE, /50 free credits/i);
 });
 
-test("auth redirect does not force an immediate full page reload", () => {
-  assert.match(authCopy, /router\.replace\("\/dashboard"\)/);
-  assert.match(authCopy, /router\.refresh\(\)/);
+test("auth redirect uses explicit dashboard navigation after verified success", () => {
+  assert.match(authCopy, /window\.location\.assign\("\/dashboard"\)/);
+  assert.match(authCopy, /\[LOGIN-REDIRECT-TRACE\]/);
   assert.doesNotMatch(authCopy, /window\.location\.replace\("\/dashboard"\)/);
 });
 

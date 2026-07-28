@@ -17,6 +17,10 @@ type SignupResponse = {
   error?: string;
 };
 
+function loginRedirectTrace(event: string, details: Record<string, unknown> = {}) {
+  console.info("[LOGIN-REDIRECT-TRACE]", event, details);
+}
+
 export function AuthForm() {
   const router = useRouter();
   const pathname = usePathname();
@@ -33,11 +37,48 @@ export function AuthForm() {
       submittingRef.current = true;
 
       authTrace("auth_form.redirect_started", { source });
+      loginRedirectTrace("before_dashboard_navigation", {
+        source,
+        pathname: typeof window !== "undefined" ? window.location.pathname : pathname,
+        loading
+      });
+
+      if (typeof window !== "undefined") {
+        window.setTimeout(() => {
+          loginRedirectTrace("pathname_100ms_after_redirect", {
+            source,
+            pathname: window.location.pathname,
+            loading
+          });
+        }, 100);
+        window.setTimeout(() => {
+          loginRedirectTrace("pathname_500ms_after_redirect", {
+            source,
+            pathname: window.location.pathname,
+            loading
+          });
+        }, 500);
+        window.setTimeout(() => {
+          loginRedirectTrace("pathname_1500ms_after_redirect", {
+            source,
+            pathname: window.location.pathname,
+            loading
+          });
+        }, 1500);
+
+        window.location.assign("/dashboard");
+        loginRedirectTrace("after_window_location_assign_call", {
+          source,
+          pathname: window.location.pathname
+        });
+        return;
+      }
 
       router.replace("/dashboard");
       router.refresh();
+      loginRedirectTrace("after_router_replace_call", { source, pathname });
     },
-    [router]
+    [loading, pathname, router]
   );
 
   useEffect(() => {
@@ -76,6 +117,14 @@ export function AuthForm() {
   }, [redirectToDashboard]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    loginRedirectTrace("submit_handler_entered", {
+      mode,
+      loading,
+      submitting: submittingRef.current,
+      redirecting: redirectingRef.current,
+      pathname: typeof window !== "undefined" ? window.location.pathname : pathname
+    });
+
     event.preventDefault();
     if (loading || submittingRef.current || redirectingRef.current) return;
 
@@ -99,8 +148,19 @@ export function AuthForm() {
       mode,
       emailProvided: Boolean(email)
     });
+    loginRedirectTrace("sign_in_flow_started", {
+      mode,
+      emailProvided: Boolean(email),
+      pathname: typeof window !== "undefined" ? window.location.pathname : pathname
+    });
 
     try {
+      if (mode === "login") {
+        loginRedirectTrace("signInWithPassword_started", {
+          pathname: typeof window !== "undefined" ? window.location.pathname : pathname
+        });
+      }
+
       const response =
         mode === "login"
           ? await authClient.auth.signInWithPassword({ email, password })
@@ -121,11 +181,19 @@ export function AuthForm() {
           submittingRef.current = false;
           setLoading(false);
           setMessage(parsed.error || "Could not create your account. Please try again.");
+          loginRedirectTrace("signup_error_branch", {
+            error: parsed.error || null,
+            loading: false
+          });
           return;
         }
 
         if (parsed.session) {
           setMessage(parsed.message || "Account created. Opening your dashboard...");
+          loginRedirectTrace("signup_session_success_branch", {
+            session: true,
+            pathname: typeof window !== "undefined" ? window.location.pathname : pathname
+          });
           redirectToDashboard("signup");
           return;
         }
@@ -133,6 +201,10 @@ export function AuthForm() {
         submittingRef.current = false;
         setLoading(false);
         setMessage(parsed.message || SIGNUP_BONUS_PENDING_MESSAGE);
+        loginRedirectTrace("signup_requires_verification_branch", {
+          session: false,
+          loading: false
+        });
         return;
       }
 
@@ -144,11 +216,24 @@ export function AuthForm() {
         emailConfirmedAt: response.data.session?.user.email_confirmed_at || null,
         error: response.error?.message || null
       });
+      loginRedirectTrace("signInWithPassword_resolved", {
+        authError: response.error?.message || null,
+        sessionExists: Boolean(response.data.session),
+        userExists: Boolean(response.data.user),
+        userId: response.data.user?.id || response.data.session?.user.id || null,
+        emailVerifiedFromSession: response.data.session?.user ? isEmailVerified(response.data.session.user) : false,
+        emailConfirmedAt: response.data.session?.user.email_confirmed_at || null,
+        pathname: typeof window !== "undefined" ? window.location.pathname : pathname
+      });
 
       if (response.error) {
         submittingRef.current = false;
         setLoading(false);
         setMessage(response.error.message);
+        loginRedirectTrace("auth_error_branch", {
+          authError: response.error.message,
+          loading: false
+        });
         return;
       }
 
@@ -157,10 +242,19 @@ export function AuthForm() {
           submittingRef.current = false;
           setLoading(false);
           setMessage(EMAIL_VERIFICATION_REQUIRED_MESSAGE);
+          loginRedirectTrace("missing_session_branch", {
+            loading: false,
+            message: "email_verification_required"
+          });
           return;
         }
 
         const verifiedFromSession = isEmailVerified(response.data.session.user);
+        loginRedirectTrace("login_success_branch_entered", {
+          sessionExists: true,
+          verifiedFromSession,
+          pathname: typeof window !== "undefined" ? window.location.pathname : pathname
+        });
         if (!verifiedFromSession) {
           const {
             data: { user },
@@ -174,9 +268,20 @@ export function AuthForm() {
             emailConfirmedAt: user?.email_confirmed_at || null,
             error: userError?.message || null
           });
+          loginRedirectTrace("verified_user_fallback_resolved", {
+            userExists: Boolean(user),
+            userId: user?.id || null,
+            emailVerifiedFromUser: user ? isEmailVerified(user) : false,
+            emailConfirmedAt: user?.email_confirmed_at || null,
+            error: userError?.message || null
+          });
 
           if (user?.email && isEmailVerified(user)) {
             setMessage("Signed in. Opening your dashboard...");
+            loginRedirectTrace("verified_user_fallback_redirect_branch", {
+              userId: user.id,
+              loading: true
+            });
             redirectToDashboard("login-verified-user");
             return;
           }
@@ -184,10 +289,18 @@ export function AuthForm() {
           submittingRef.current = false;
           setLoading(false);
           setMessage(EMAIL_VERIFICATION_REQUIRED_MESSAGE);
+          loginRedirectTrace("unverified_user_branch", {
+            loading: false,
+            message: "email_verification_required"
+          });
           return;
         }
 
         setMessage("Signed in. Opening your dashboard...");
+        loginRedirectTrace("verified_session_redirect_branch", {
+          userId: response.data.session.user.id,
+          loading: true
+        });
         redirectToDashboard("login");
         return;
       }
@@ -195,7 +308,16 @@ export function AuthForm() {
       submittingRef.current = false;
       setLoading(false);
       setMessage(SIGNUP_BONUS_PENDING_MESSAGE);
+      loginRedirectTrace("non_login_fallback_branch", {
+        mode,
+        loading: false
+      });
     } catch (error) {
+      loginRedirectTrace("caught_exception", {
+        message: error instanceof Error ? error.message : String(error),
+        redirecting: redirectingRef.current,
+        loading: redirectingRef.current ? loading : false
+      });
       if (!redirectingRef.current) {
         submittingRef.current = false;
         setLoading(false);
