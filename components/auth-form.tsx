@@ -6,6 +6,7 @@ import { LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BrandLogo } from "@/components/brand-logo";
+import { authTrace } from "@/lib/auth-trace";
 import { EMAIL_VERIFICATION_REQUIRED_MESSAGE, SIGNUP_BONUS_PENDING_MESSAGE, isEmailVerified } from "@/lib/auth-security";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase/client";
 
@@ -30,9 +31,7 @@ export function AuthForm() {
       redirectingRef.current = true;
       submittingRef.current = true;
 
-      if (process.env.NODE_ENV === "development") {
-        console.debug("[auth] redirect started", { source });
-      }
+      authTrace("auth_form.redirect_started", { source });
 
       router.replace("/dashboard");
 
@@ -50,12 +49,12 @@ export function AuthForm() {
     let mounted = true;
 
     authClient.auth.getSession().then(async ({ data, error }) => {
-      if (process.env.NODE_ENV === "development") {
-        console.debug("[auth] existing session check", {
-          hasSession: Boolean(data.session),
-          error: error?.message
-        });
-      }
+      authTrace("auth_form.existing_session_check", {
+        hasSession: Boolean(data.session),
+        userId: data.session?.user.id || null,
+        emailVerified: data.session?.user ? isEmailVerified(data.session.user) : false,
+        error: error?.message || null
+      });
 
       if (mounted && data.session && isEmailVerified(data.session.user)) {
         redirectToDashboard("existing-session");
@@ -88,6 +87,11 @@ export function AuthForm() {
     const authClient = supabase;
     setLoading(true);
     setMessage(mode === "login" ? "Signing in..." : "Creating your account...");
+
+    authTrace("auth_form.submit_started", {
+      mode,
+      emailProvided: Boolean(email)
+    });
 
     try {
       const response =
@@ -125,14 +129,14 @@ export function AuthForm() {
         return;
       }
 
-      if (process.env.NODE_ENV === "development") {
-        console.debug("[auth] auth response received", {
-          mode,
-          hasSession: Boolean(response.data.session),
-          hasUser: Boolean(response.data.user),
-          error: response.error?.message
-        });
-      }
+      authTrace("auth_form.sign_in_returned", {
+        mode,
+        hasSession: Boolean(response.data.session),
+        userId: response.data.user?.id || response.data.session?.user.id || null,
+        emailVerified: response.data.session?.user ? isEmailVerified(response.data.session.user) : false,
+        emailConfirmedAt: response.data.session?.user.email_confirmed_at || null,
+        error: response.error?.message || null
+      });
 
       if (response.error) {
         submittingRef.current = false;
@@ -149,7 +153,27 @@ export function AuthForm() {
           return;
         }
 
-        if (!isEmailVerified(response.data.session.user)) {
+        const verifiedFromSession = isEmailVerified(response.data.session.user);
+        if (!verifiedFromSession) {
+          const {
+            data: { user },
+            error: userError
+          } = await authClient.auth.getUser();
+
+          authTrace("auth_form.sign_in_get_user", {
+            hasUser: Boolean(user),
+            userId: user?.id || null,
+            emailVerified: user ? isEmailVerified(user) : false,
+            emailConfirmedAt: user?.email_confirmed_at || null,
+            error: userError?.message || null
+          });
+
+          if (user?.email && isEmailVerified(user)) {
+            setMessage("Signed in. Opening your dashboard...");
+            redirectToDashboard("login-verified-user");
+            return;
+          }
+
           submittingRef.current = false;
           setLoading(false);
           setMessage(EMAIL_VERIFICATION_REQUIRED_MESSAGE);

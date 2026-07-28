@@ -1,9 +1,11 @@
 import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse, type NextRequest } from "next/server";
+import { authTrace } from "@/lib/auth-trace";
 import { isEmailVerified } from "@/lib/auth-security";
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
+  const host = request.nextUrl.hostname;
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return response;
@@ -15,6 +17,22 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getSession();
 
   const { pathname } = request.nextUrl;
+  if (host === "zanscope.com") {
+    const canonicalUrl = request.nextUrl.clone();
+    canonicalUrl.hostname = "www.zanscope.com";
+
+    authTrace("middleware.redirect", {
+      pathname,
+      userId: session?.user.id || null,
+      emailVerified: session?.user ? isEmailVerified(session.user) : false,
+      destination: canonicalUrl.toString(),
+      reason: "canonical_www",
+      refreshedCookies: response.cookies.getAll().length
+    });
+
+    return redirectWithAuthCookies(canonicalUrl, response);
+  }
+
   const isLoginPage = pathname === "/login";
   const isSearchDemoPage = pathname === "/search/results" && request.nextUrl.searchParams.get("demo") === "true";
   const isProtectedPage =
@@ -24,20 +42,40 @@ export async function middleware(request: NextRequest) {
     (pathname.startsWith("/search/") && !isSearchDemoPage);
   const hasVerifiedSession = Boolean(session && isEmailVerified(session.user));
 
-  if (process.env.NODE_ENV === "development" && (isLoginPage || isProtectedPage)) {
-    console.debug("[auth middleware] session check", {
-      pathname,
-      hasSession: Boolean(session),
-      hasVerifiedSession
-    });
-  }
+  authTrace("middleware.session_check", {
+    pathname,
+    userId: session?.user.id || null,
+    hasSession: Boolean(session),
+    hasVerifiedSession,
+    emailVerified: session?.user ? isEmailVerified(session.user) : false,
+    refreshedCookies: response.cookies.getAll().length,
+    response: isLoginPage && hasVerifiedSession ? "redirect" : isProtectedPage && !hasVerifiedSession ? "redirect" : "next"
+  });
 
   if (isLoginPage && hasVerifiedSession) {
-    return redirectWithAuthCookies(new URL("/dashboard", request.url), response);
+    const destination = new URL("/dashboard", request.url);
+    authTrace("middleware.redirect", {
+      pathname,
+      userId: session?.user.id || null,
+      emailVerified: session?.user ? isEmailVerified(session.user) : false,
+      destination: destination.toString(),
+      reason: "verified_user_on_login",
+      refreshedCookies: response.cookies.getAll().length
+    });
+    return redirectWithAuthCookies(destination, response);
   }
 
   if (isProtectedPage && !hasVerifiedSession) {
-    return redirectWithAuthCookies(new URL("/login", request.url), response);
+    const destination = new URL("/login", request.url);
+    authTrace("middleware.redirect", {
+      pathname,
+      userId: session?.user.id || null,
+      emailVerified: session?.user ? isEmailVerified(session.user) : false,
+      destination: destination.toString(),
+      reason: "missing_verified_session",
+      refreshedCookies: response.cookies.getAll().length
+    });
+    return redirectWithAuthCookies(destination, response);
   }
 
   return response;

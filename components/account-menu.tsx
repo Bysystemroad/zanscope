@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { authTrace } from "@/lib/auth-trace";
 import { isEmailVerified } from "@/lib/auth-security";
 import { supabase } from "@/lib/supabase/client";
 
@@ -22,30 +23,61 @@ export function AccountMenu() {
       return;
     }
 
+    const authClient = supabase;
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data, error }) => {
+    authClient.auth.getSession().then(async ({ data, error }) => {
       if (!mounted) return;
+
+      authTrace("account_menu.initial_session", {
+        hasSession: Boolean(data.session),
+        userId: data.session?.user.id || null,
+        emailVerified: data.session?.user ? isEmailVerified(data.session.user) : false,
+        error: error?.message || null
+      });
+
       if (error) {
         setLoading(false);
         return;
       }
-      setAccount(data.session?.user.email && isEmailVerified(data.session.user) ? { email: data.session.user.email } : null);
+
+      const {
+        data: { user },
+        error: userError
+      } = await authClient.auth.getUser();
+
+      if (!mounted) return;
+
+      authTrace("account_menu.get_user", {
+        hasUser: Boolean(user),
+        userId: user?.id || null,
+        emailVerified: user ? isEmailVerified(user) : false,
+        error: userError?.message || null
+      });
+
+      if (user?.email && isEmailVerified(user)) {
+        setAccount({ email: user.email });
+      } else if (!data.session) {
+        setAccount(null);
+      }
+
       setLoading(false);
     });
 
     const {
       data: { subscription }
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (process.env.NODE_ENV === "development") {
-        console.debug("[auth account] event", {
-          event,
-          userId: session?.user.id,
-          emailVerified: session?.user ? isEmailVerified(session.user) : false
-        });
-      }
+    } = authClient.auth.onAuthStateChange((event, session) => {
+      authTrace("account_menu.auth_state_change", {
+        event,
+        hasSession: Boolean(session),
+        userId: session?.user.id || null,
+        emailVerified: session?.user ? isEmailVerified(session.user) : false
+      });
 
       if (event === "SIGNED_OUT") {
+        authTrace("account_menu.state_to_null", {
+          reason: "SIGNED_OUT"
+        });
         setAccount(null);
         setLoading(false);
         router.refresh();
@@ -54,6 +86,16 @@ export function AccountMenu() {
 
       if (session?.user.email && isEmailVerified(session.user)) {
         setAccount({ email: session.user.email });
+      } else if (session) {
+        authTrace("account_menu.preserve_state", {
+          reason: "session_present_but_not_confirmed_in_event",
+          event
+        });
+      } else {
+        authTrace("account_menu.preserve_state", {
+          reason: "non_signout_null_session_event",
+          event
+        });
       }
 
       setLoading(false);
@@ -67,7 +109,13 @@ export function AccountMenu() {
 
   async function logout() {
     if (!supabase) return;
+    authTrace("account_menu.sign_out_invoked", {
+      reason: "user_clicked_logout"
+    });
     await supabase.auth.signOut();
+    authTrace("account_menu.state_to_null", {
+      reason: "user_clicked_logout"
+    });
     setAccount(null);
     router.replace("/login");
     router.refresh();

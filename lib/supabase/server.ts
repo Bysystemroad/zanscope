@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Lead, leads as demoLeads, searches as demoSearches, SearchRecord } from "@/lib/dummy-data";
+import { authTrace } from "@/lib/auth-trace";
 import { ensureUserProfile } from "@/lib/supabase/profile";
 
 export type SearchHistoryRecord = SearchRecord & {
@@ -108,6 +109,11 @@ export async function getUserProfile(): Promise<UserProfileRecord> {
     data: { user }
   } = await supabase.auth.getUser();
 
+  authTrace("server.get_user_profile.auth_result", {
+    hasUser: Boolean(user),
+    userId: user?.id || null
+  });
+
   if (!user) {
     return {
       email: "Demo workspace",
@@ -119,6 +125,11 @@ export async function getUserProfile(): Promise<UserProfileRecord> {
 
   try {
     const profile = await ensureUserProfile(supabase, user);
+    authTrace("server.get_user_profile.profile_result", {
+      userId: user.id,
+      profileFound: true,
+      error: null
+    });
     return {
       email: profile.email,
       plan: profile.plan,
@@ -127,6 +138,11 @@ export async function getUserProfile(): Promise<UserProfileRecord> {
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    authTrace("server.get_user_profile.profile_result", {
+      userId: user.id,
+      profileFound: false,
+      error: message
+    });
     return {
       email: user.email || "",
       plan: "Profile error",
