@@ -60,7 +60,6 @@ export function AuthForm() {
       if (mounted && data.session && isEmailVerified(data.session.user)) {
         redirectToDashboard("existing-session");
       } else if (mounted && data.session) {
-        await authClient.auth.signOut();
         setMessage(EMAIL_VERIFICATION_REQUIRED_MESSAGE);
       }
     });
@@ -151,7 +150,6 @@ export function AuthForm() {
         }
 
         if (!isEmailVerified(response.data.session.user)) {
-          await authClient.auth.signOut();
           submittingRef.current = false;
           setLoading(false);
           setMessage(EMAIL_VERIFICATION_REQUIRED_MESSAGE);

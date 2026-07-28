@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { isEmailVerified } from "@/lib/auth-security";
 import { supabase } from "@/lib/supabase/client";
 
 type AccountState = {
@@ -23,20 +24,39 @@ export function AccountMenu() {
 
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(({ data, error }) => {
       if (!mounted) return;
-      setAccount(data.session?.user.email ? { email: data.session.user.email } : null);
+      if (error) {
+        setLoading(false);
+        return;
+      }
+      setAccount(data.session?.user.email && isEmailVerified(data.session.user) ? { email: data.session.user.email } : null);
       setLoading(false);
     });
 
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((event, session) => {
-      setAccount(session?.user.email ? { email: session.user.email } : null);
-      setLoading(false);
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-        router.refresh();
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[auth account] event", {
+          event,
+          userId: session?.user.id,
+          emailVerified: session?.user ? isEmailVerified(session.user) : false
+        });
       }
+
+      if (event === "SIGNED_OUT") {
+        setAccount(null);
+        setLoading(false);
+        router.refresh();
+        return;
+      }
+
+      if (session?.user.email && isEmailVerified(session.user)) {
+        setAccount({ email: session.user.email });
+      }
+
+      setLoading(false);
     });
 
     return () => {

@@ -33,11 +33,11 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isLoginPage && hasVerifiedSession) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return redirectWithAuthCookies(new URL("/dashboard", request.url), response);
   }
 
   if (isProtectedPage && !hasVerifiedSession) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return redirectWithAuthCookies(new URL("/login", request.url), response);
   }
 
   return response;
@@ -46,3 +46,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/login", "/dashboard/:path*", "/billing", "/search/:path*"]
 };
+
+function redirectWithAuthCookies(url: URL, response: NextResponse) {
+  const redirectResponse = NextResponse.redirect(url);
+  response.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie);
+  });
+  return redirectResponse;
+}

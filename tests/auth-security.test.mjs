@@ -13,6 +13,7 @@ import {
 const migrationSql = fs.readFileSync(new URL("../lib/supabase/signup-security-migration.sql", import.meta.url), "utf8");
 const landingCopy = fs.readFileSync(new URL("../components/landing-page-client.tsx", import.meta.url), "utf8");
 const authCopy = fs.readFileSync(new URL("../components/auth-form.tsx", import.meta.url), "utf8");
+const accountMenuSource = fs.readFileSync(new URL("../components/account-menu.tsx", import.meta.url), "utf8");
 const middlewareSource = fs.readFileSync(new URL("../middleware.ts", import.meta.url), "utf8");
 
 test("new verified signup bonus is exactly 50 credits", () => {
@@ -68,6 +69,17 @@ test("email validation normalizes and rejects malformed email addresses", () => 
 test("protected routes reject unverified users in middleware", () => {
   assert.match(middlewareSource, /hasVerifiedSession/);
   assert.match(middlewareSource, /isProtectedPage && !hasVerifiedSession/);
+});
+
+test("middleware redirects preserve refreshed auth cookies", () => {
+  assert.match(middlewareSource, /redirectWithAuthCookies/);
+  assert.match(middlewareSource, /response\.cookies\.getAll\(\)\.forEach/);
+});
+
+test("account menu does not clear a valid user except on explicit sign out", () => {
+  assert.match(accountMenuSource, /event === "SIGNED_OUT"/);
+  assert.match(accountMenuSource, /setAccount\(null\)/);
+  assert.doesNotMatch(accountMenuSource, /setAccount\(session\?\.user\.email \? \{ email: session\.user\.email \} : null\)/);
 });
 
 test("UI displays 50 free credits instead of 100", () => {
