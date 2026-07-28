@@ -17,6 +17,13 @@ export async function middleware(request: NextRequest) {
   const isLoginPage = pathname === "/login";
   const isDashboardPage = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
 
+  if (process.env.NODE_ENV === "development" && (isLoginPage || isDashboardPage)) {
+    console.debug("[auth middleware] session check", {
+      pathname,
+      hasSession: Boolean(session)
+    });
+  }
+
   if (isLoginPage && session) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }

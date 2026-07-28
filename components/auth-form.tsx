@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,48 +10,124 @@ import { isSupabaseConfigured, supabase } from "@/lib/supabase/client";
 
 export function AuthForm() {
   const router = useRouter();
+  const submittingRef = useRef(false);
+  const redirectingRef = useRef(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [message, setMessage] = useState("Your data, saved searches, credits, and lead lists are securely linked to your account.");
   const [loading, setLoading] = useState(false);
 
+  const redirectToDashboard = useCallback(
+    (source: string) => {
+      if (redirectingRef.current) return;
+      redirectingRef.current = true;
+      submittingRef.current = true;
+
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[auth] redirect started", { source });
+      }
+
+      router.replace("/dashboard");
+
+      if (typeof window !== "undefined" && window.location.pathname !== "/dashboard") {
+        window.location.replace("/dashboard");
+      }
+    },
+    [router]
+  );
+
+  useEffect(() => {
+    if (!supabase || !isSupabaseConfigured) return;
+
+    let mounted = true;
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[auth] existing session check", {
+          hasSession: Boolean(data.session),
+          error: error?.message
+        });
+      }
+
+      if (mounted && data.session) {
+        redirectToDashboard("existing-session");
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [redirectToDashboard]);
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (loading || submittingRef.current || redirectingRef.current) return;
+
+    submittingRef.current = true;
+
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email"));
     const password = String(form.get("password"));
 
     if (!supabase || !isSupabaseConfigured) {
+      submittingRef.current = false;
       setMessage("Authentication is temporarily unavailable. Please try again shortly.");
       return;
     }
 
     setLoading(true);
-    const response =
-      mode === "login"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
+    setMessage(mode === "login" ? "Signing in..." : "Creating your account...");
 
-    if (response.error) {
-      setLoading(false);
-      setMessage(response.error.message);
-      return;
-    }
+    try {
+      const response =
+        mode === "login"
+          ? await supabase.auth.signInWithPassword({ email, password })
+          : await supabase.auth.signUp({ email, password });
 
-    if (mode === "login") {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[auth] auth response received", {
+          mode,
+          hasSession: Boolean(response.data.session),
+          hasUser: Boolean(response.data.user),
+          error: response.error?.message
+        });
+      }
 
-      if (sessionError || !sessionData.session) {
+      if (response.error) {
+        submittingRef.current = false;
         setLoading(false);
-        setMessage(sessionError?.message || "Login succeeded, but the session could not be confirmed. Please try again.");
+        setMessage(response.error.message);
         return;
       }
 
-      router.replace("/dashboard");
-      return;
-    }
+      if (mode === "login") {
+        if (!response.data.session) {
+          submittingRef.current = false;
+          setLoading(false);
+          setMessage("Login succeeded, but the session could not be confirmed. Please try again.");
+          return;
+        }
 
-    setLoading(false);
-    setMessage("Check your email to confirm your account.");
+        setMessage("Signed in. Opening your dashboard...");
+        redirectToDashboard("login");
+        return;
+      }
+
+      if (response.data.session) {
+        setMessage("Account created. Opening your dashboard...");
+        redirectToDashboard("signup");
+        return;
+      }
+
+      submittingRef.current = false;
+      setLoading(false);
+      setMessage("Check your email to confirm your account.");
+    } catch (error) {
+      if (!redirectingRef.current) {
+        submittingRef.current = false;
+        setLoading(false);
+        setMessage(error instanceof Error ? error.message : "Authentication failed. Please try again.");
+      }
+    }
   }
 
   return (
@@ -77,7 +153,13 @@ export function AuthForm() {
       <div className="mb-6 flex rounded-2xl border border-white/10 bg-white/[0.045] p-1">
         <button
           type="button"
-          onClick={() => setMode("login")}
+          onClick={() => {
+            if (loading || redirectingRef.current) return;
+            submittingRef.current = false;
+            setMode("login");
+            setMessage("Your data, saved searches, credits, and lead lists are securely linked to your account.");
+          }}
+          disabled={loading}
           className={`h-11 flex-1 rounded-xl text-sm font-medium transition ${
             mode === "login"
               ? "bg-white text-[#080f14] shadow-[0_10px_30px_rgba(255,255,255,0.12)]"
@@ -88,7 +170,13 @@ export function AuthForm() {
         </button>
         <button
           type="button"
-          onClick={() => setMode("signup")}
+          onClick={() => {
+            if (loading || redirectingRef.current) return;
+            submittingRef.current = false;
+            setMode("signup");
+            setMessage("Your data, saved searches, credits, and lead lists are securely linked to your account.");
+          }}
+          disabled={loading}
           className={`h-11 flex-1 rounded-xl text-sm font-medium transition ${
             mode === "signup"
               ? "bg-white text-[#080f14] shadow-[0_10px_30px_rgba(255,255,255,0.12)]"
