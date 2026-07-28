@@ -1,5 +1,6 @@
 import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse, type NextRequest } from "next/server";
+import { isEmailVerified } from "@/lib/auth-security";
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
@@ -15,20 +16,27 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isLoginPage = pathname === "/login";
-  const isDashboardPage = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+  const isSearchDemoPage = pathname === "/search/results" && request.nextUrl.searchParams.get("demo") === "true";
+  const isProtectedPage =
+    pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/") ||
+    pathname === "/billing" ||
+    (pathname.startsWith("/search/") && !isSearchDemoPage);
+  const hasVerifiedSession = Boolean(session && isEmailVerified(session.user));
 
-  if (process.env.NODE_ENV === "development" && (isLoginPage || isDashboardPage)) {
+  if (process.env.NODE_ENV === "development" && (isLoginPage || isProtectedPage)) {
     console.debug("[auth middleware] session check", {
       pathname,
-      hasSession: Boolean(session)
+      hasSession: Boolean(session),
+      hasVerifiedSession
     });
   }
 
-  if (isLoginPage && session) {
+  if (isLoginPage && hasVerifiedSession) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  if (isDashboardPage && !session) {
+  if (isProtectedPage && !hasVerifiedSession) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -36,5 +44,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/dashboard/:path*"]
+  matcher: ["/login", "/dashboard/:path*", "/billing", "/search/:path*"]
 };

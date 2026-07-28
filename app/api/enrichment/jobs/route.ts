@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { VERIFIED_ACCOUNT_REQUIRED_MESSAGE, isEmailVerified } from "@/lib/auth-security";
 
 export async function GET() {
   const supabase = createRouteHandlerClient({ cookies });
@@ -10,6 +11,10 @@ export async function GET() {
 
   if (!user) {
     return NextResponse.json({ error: "Sign in to view enrichment jobs." }, { status: 401 });
+  }
+
+  if (!isEmailVerified(user)) {
+    return NextResponse.json({ error: VERIFIED_ACCOUNT_REQUIRED_MESSAGE }, { status: 403 });
   }
 
   const { data, error } = await supabase

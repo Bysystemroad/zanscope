@@ -5,6 +5,7 @@ import { discoverEmailsForLeads } from "@/lib/email-discovery";
 import { dedupeLeads } from "@/lib/lead-dedupe";
 import { scoreLeads } from "@/lib/lead-scoring";
 import { Lead } from "@/lib/dummy-data";
+import { VERIFIED_ACCOUNT_REQUIRED_MESSAGE, isEmailVerified } from "@/lib/auth-security";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { assertSafePublicHttpUrl } from "@/lib/url-security";
 
@@ -32,6 +33,10 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Sign in to enrich leads." }, { status: 401 });
+  }
+
+  if (!isEmailVerified(user)) {
+    return NextResponse.json({ error: VERIFIED_ACCOUNT_REQUIRED_MESSAGE }, { status: 403 });
   }
 
   const rateLimit = checkRateLimit(request, "scrape-emails", { limit: 10, windowMs: 60_000 }, user.id);

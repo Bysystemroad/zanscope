@@ -229,7 +229,7 @@ export function LandingPageClient() {
               <Link href="/login">
                 <Button className="h-12 px-6">
                   <Search className="h-4 w-4" />
-                  Start free with 100 credits
+                  Start free with 50 credits
                 </Button>
               </Link>
               <Link href="/search/results?demo=true">
@@ -428,7 +428,7 @@ export function LandingPageClient() {
             <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">Launch a search or enrich your own CSV, then export a clean lead list to Excel or CSV.</p>
             <Link href="/login" className="mt-7 inline-flex">
               <Button className="h-12 px-6">
-                Start free with 100 credits
+                Start free with 50 credits
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>

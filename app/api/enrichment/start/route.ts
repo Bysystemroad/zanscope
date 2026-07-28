@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { searchApifyGoogle } from "@/lib/apify-search";
 import { calculateLeadCreditCost } from "@/lib/credits";
+import { VERIFIED_ACCOUNT_REQUIRED_MESSAGE, isEmailVerified } from "@/lib/auth-security";
 import type { CsvRow } from "@/lib/csv-upload";
 import type { Lead } from "@/lib/dummy-data";
 import { discoverEmailsForLeads } from "@/lib/email-discovery";
@@ -171,6 +172,10 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ demoMode: true, error: "Log in to enrich your own company lists." }, { status: 401 });
+  }
+
+  if (!isEmailVerified(user)) {
+    return NextResponse.json({ error: VERIFIED_ACCOUNT_REQUIRED_MESSAGE }, { status: 403 });
   }
 
   const rateLimit = checkRateLimit(request, "enrichment-start", { limit: 4, windowMs: 60_000 }, user.id);

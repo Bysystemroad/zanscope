@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { getCreditPackage } from "@/lib/stripe-packages";
+import { VERIFIED_ACCOUNT_REQUIRED_MESSAGE, isEmailVerified } from "@/lib/auth-security";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { ensureUserProfile } from "@/lib/supabase/profile";
 
@@ -36,6 +37,10 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Log in to buy credits." }, { status: 401 });
+  }
+
+  if (!isEmailVerified(user)) {
+    return NextResponse.json({ error: VERIFIED_ACCOUNT_REQUIRED_MESSAGE }, { status: 403 });
   }
 
   const rateLimit = checkRateLimit(request, "stripe-checkout", { limit: 10, windowMs: 60_000 }, user.id);

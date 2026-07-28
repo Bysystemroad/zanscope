@@ -9,6 +9,7 @@ import { dedupeLeads } from "@/lib/lead-dedupe";
 import { sanitizeLeadsForUsers } from "@/lib/lead-public";
 import { scoreLeads, sortLeadsByScore } from "@/lib/lead-scoring";
 import { searchGooglePlaces } from "@/lib/google-places";
+import { VERIFIED_ACCOUNT_REQUIRED_MESSAGE, isEmailVerified } from "@/lib/auth-security";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { ensureUserProfile } from "@/lib/supabase/profile";
@@ -108,6 +109,10 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json(demoResponse);
+  }
+
+  if (!isEmailVerified(user)) {
+    return NextResponse.json({ error: VERIFIED_ACCOUNT_REQUIRED_MESSAGE, demoMode: false }, { status: 403 });
   }
 
   const rateLimit = checkRateLimit(request, "searches", { limit: 8, windowMs: 60_000 }, user.id);

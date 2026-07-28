@@ -1,4 +1,5 @@
 import { SupabaseClient, User } from "@supabase/supabase-js";
+import { SIGNUP_BONUS_CREDITS, isEmailVerified } from "@/lib/auth-security";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type UserProfile = {
@@ -6,6 +7,7 @@ export type UserProfile = {
   email: string;
   plan: string;
   credits: number;
+  signup_bonus_granted_at?: string | null;
 };
 
 type UserProfileRow = {
@@ -13,6 +15,7 @@ type UserProfileRow = {
   email: string | null;
   plan: string | null;
   credits: number | null;
+  signup_bonus_granted_at?: string | null;
 };
 
 function normalizeProfile(row: UserProfileRow, user: User): UserProfile {
@@ -20,8 +23,40 @@ function normalizeProfile(row: UserProfileRow, user: User): UserProfile {
     id: row.id,
     email: row.email || user.email || "",
     plan: row.plan || "Free",
-    credits: row.credits ?? 0
+    credits: row.credits ?? 0,
+    signup_bonus_granted_at: row.signup_bonus_granted_at || null
   };
+}
+
+async function maybeGrantSignupBonus(profileClient: SupabaseClient, user: User) {
+  if (!isEmailVerified(user)) return;
+
+  const { error } = await profileClient.rpc("grant_verified_signup_bonus", {
+    p_user_id: user.id,
+    p_email: user.email || "",
+    p_amount: SIGNUP_BONUS_CREDITS
+  });
+
+  if (error) {
+    throw new Error(`Could not grant verified signup credits: ${error.message}`);
+  }
+}
+
+export async function createPendingSignupProfile(user: Pick<User, "id" | "email">): Promise<void> {
+  const profileClient = createSupabaseAdminClient();
+  const { error } = await profileClient
+    .from("users")
+    .insert({
+      id: user.id,
+      email: user.email || "",
+      plan: "Free",
+      credits: 0,
+      signup_bonus_eligible: true
+    });
+
+  if (error && error.code !== "23505") {
+    throw new Error(`Could not create pending public.users profile: ${error.message}`);
+  }
 }
 
 export async function ensureUserProfile(supabase: SupabaseClient, user: User): Promise<UserProfile> {
@@ -35,7 +70,7 @@ export async function ensureUserProfile(supabase: SupabaseClient, user: User): P
 
   const { data: profile, error: readError } = await profileClient
     .from("users")
-    .select("id, email, plan, credits")
+    .select("id, email, plan, credits, signup_bonus_granted_at")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -44,7 +79,14 @@ export async function ensureUserProfile(supabase: SupabaseClient, user: User): P
   }
 
   if (profile) {
-    return normalizeProfile(profile as UserProfileRow, user);
+    await maybeGrantSignupBonus(profileClient, user);
+    const { data: refreshedProfile } = await profileClient
+      .from("users")
+      .select("id, email, plan, credits, signup_bonus_granted_at")
+      .eq("id", user.id)
+      .single();
+
+    return normalizeProfile((refreshedProfile || profile) as UserProfileRow, user);
   }
 
   const { data: createdProfile, error: createError } = await profileClient
@@ -53,19 +95,27 @@ export async function ensureUserProfile(supabase: SupabaseClient, user: User): P
       id: user.id,
       email: user.email || "",
       plan: "Free",
-      credits: 100
+      credits: 0,
+      signup_bonus_eligible: false
     })
-    .select("id, email, plan, credits")
+    .select("id, email, plan, credits, signup_bonus_granted_at")
     .single();
 
   if (!createError && createdProfile) {
-    return normalizeProfile(createdProfile as UserProfileRow, user);
+    await maybeGrantSignupBonus(profileClient, user);
+    const { data: refreshedProfile } = await profileClient
+      .from("users")
+      .select("id, email, plan, credits, signup_bonus_granted_at")
+      .eq("id", user.id)
+      .single();
+
+    return normalizeProfile((refreshedProfile || createdProfile) as UserProfileRow, user);
   }
 
   if (createError?.code === "23505") {
     const { data: retryProfile, error: retryError } = await profileClient
       .from("users")
-      .select("id, email, plan, credits")
+      .select("id, email, plan, credits, signup_bonus_granted_at")
       .eq("id", user.id)
       .single();
 
@@ -73,7 +123,14 @@ export async function ensureUserProfile(supabase: SupabaseClient, user: User): P
       throw new Error(`Profile already existed, but could not be read: ${retryError?.message || "No profile returned"}`);
     }
 
-    return normalizeProfile(retryProfile as UserProfileRow, user);
+    await maybeGrantSignupBonus(profileClient, user);
+    const { data: refreshedProfile } = await profileClient
+      .from("users")
+      .select("id, email, plan, credits, signup_bonus_granted_at")
+      .eq("id", user.id)
+      .single();
+
+    return normalizeProfile((refreshedProfile || retryProfile) as UserProfileRow, user);
   }
 
   throw new Error(`Could not create public.users profile: ${createError?.message || "No profile returned"}`);

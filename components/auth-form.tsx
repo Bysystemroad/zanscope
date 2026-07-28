@@ -6,14 +6,22 @@ import { LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BrandLogo } from "@/components/brand-logo";
+import { EMAIL_VERIFICATION_REQUIRED_MESSAGE, SIGNUP_BONUS_PENDING_MESSAGE, isEmailVerified } from "@/lib/auth-security";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase/client";
+
+type SignupResponse = {
+  session?: boolean;
+  requiresVerification?: boolean;
+  message?: string;
+  error?: string;
+};
 
 export function AuthForm() {
   const router = useRouter();
   const submittingRef = useRef(false);
   const redirectingRef = useRef(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
-  const [message, setMessage] = useState("Your data, saved searches, credits, and lead lists are securely linked to your account.");
+  const [message, setMessage] = useState("Create an account, verify your email, and your 50 free credits will be added after verification.");
   const [loading, setLoading] = useState(false);
 
   const redirectToDashboard = useCallback(
@@ -38,9 +46,10 @@ export function AuthForm() {
   useEffect(() => {
     if (!supabase || !isSupabaseConfigured) return;
 
+    const authClient = supabase;
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data, error }) => {
+    authClient.auth.getSession().then(async ({ data, error }) => {
       if (process.env.NODE_ENV === "development") {
         console.debug("[auth] existing session check", {
           hasSession: Boolean(data.session),
@@ -48,8 +57,11 @@ export function AuthForm() {
         });
       }
 
-      if (mounted && data.session) {
+      if (mounted && data.session && isEmailVerified(data.session.user)) {
         redirectToDashboard("existing-session");
+      } else if (mounted && data.session) {
+        await authClient.auth.signOut();
+        setMessage(EMAIL_VERIFICATION_REQUIRED_MESSAGE);
       }
     });
 
@@ -74,14 +86,45 @@ export function AuthForm() {
       return;
     }
 
+    const authClient = supabase;
     setLoading(true);
     setMessage(mode === "login" ? "Signing in..." : "Creating your account...");
 
     try {
       const response =
         mode === "login"
-          ? await supabase.auth.signInWithPassword({ email, password })
-          : await supabase.auth.signUp({ email, password });
+          ? await authClient.auth.signInWithPassword({ email, password })
+          : {
+              data: { session: null, user: null },
+              error: null,
+              signup: await fetch("/api/auth/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+              })
+            };
+
+      if ("signup" in response) {
+        const parsed = (await response.signup.json()) as SignupResponse;
+
+        if (!response.signup.ok || parsed.error) {
+          submittingRef.current = false;
+          setLoading(false);
+          setMessage(parsed.error || "Could not create your account. Please try again.");
+          return;
+        }
+
+        if (parsed.session) {
+          setMessage(parsed.message || "Account created. Opening your dashboard...");
+          redirectToDashboard("signup");
+          return;
+        }
+
+        submittingRef.current = false;
+        setLoading(false);
+        setMessage(parsed.message || SIGNUP_BONUS_PENDING_MESSAGE);
+        return;
+      }
 
       if (process.env.NODE_ENV === "development") {
         console.debug("[auth] auth response received", {
@@ -103,7 +146,15 @@ export function AuthForm() {
         if (!response.data.session) {
           submittingRef.current = false;
           setLoading(false);
-          setMessage("Login succeeded, but the session could not be confirmed. Please try again.");
+          setMessage(EMAIL_VERIFICATION_REQUIRED_MESSAGE);
+          return;
+        }
+
+        if (!isEmailVerified(response.data.session.user)) {
+          await authClient.auth.signOut();
+          submittingRef.current = false;
+          setLoading(false);
+          setMessage(EMAIL_VERIFICATION_REQUIRED_MESSAGE);
           return;
         }
 
@@ -112,15 +163,9 @@ export function AuthForm() {
         return;
       }
 
-      if (response.data.session) {
-        setMessage("Account created. Opening your dashboard...");
-        redirectToDashboard("signup");
-        return;
-      }
-
       submittingRef.current = false;
       setLoading(false);
-      setMessage("Check your email to confirm your account.");
+      setMessage(SIGNUP_BONUS_PENDING_MESSAGE);
     } catch (error) {
       if (!redirectingRef.current) {
         submittingRef.current = false;
@@ -147,7 +192,7 @@ export function AuthForm() {
             : "Discover high-quality B2B companies, organize your prospects, and build better outbound campaigns."}
         </p>
         <p className="mt-3 text-sm font-medium text-[#d8e0e8]">Secure access to your lead workspace.</p>
-        <p className="mt-1 text-xs leading-5 text-[#7f8c98]">Your searches, credits, exports and lead lists stay linked to your account.</p>
+        <p className="mt-1 text-xs leading-5 text-[#7f8c98]">Verify your email before signing in. Your 50 free credits are added after verification.</p>
       </div>
 
       <div className="mb-6 flex rounded-2xl border border-white/10 bg-white/[0.045] p-1">
@@ -157,7 +202,7 @@ export function AuthForm() {
             if (loading || redirectingRef.current) return;
             submittingRef.current = false;
             setMode("login");
-            setMessage("Your data, saved searches, credits, and lead lists are securely linked to your account.");
+            setMessage("Create an account, verify your email, and your 50 free credits will be added after verification.");
           }}
           disabled={loading}
           className={`h-11 flex-1 rounded-xl text-sm font-medium transition ${
@@ -174,7 +219,7 @@ export function AuthForm() {
             if (loading || redirectingRef.current) return;
             submittingRef.current = false;
             setMode("signup");
-            setMessage("Your data, saved searches, credits, and lead lists are securely linked to your account.");
+            setMessage("Create an account, verify your email, and your 50 free credits will be added after verification.");
           }}
           disabled={loading}
           className={`h-11 flex-1 rounded-xl text-sm font-medium transition ${

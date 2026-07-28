@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { VERIFIED_ACCOUNT_REQUIRED_MESSAGE, isEmailVerified } from "@/lib/auth-security";
 
 async function getUser() {
   const supabase = createRouteHandlerClient({ cookies });
@@ -23,6 +24,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ lis
 
   if (!user) {
     return NextResponse.json({ error: "Sign in to add leads to a list." }, { status: 401 });
+  }
+
+  if (!isEmailVerified(user)) {
+    return NextResponse.json({ error: VERIFIED_ACCOUNT_REQUIRED_MESSAGE }, { status: 403 });
   }
 
   const payload = (await request.json()) as { leadIds?: string[] };
@@ -69,6 +74,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ l
 
   if (!user) {
     return NextResponse.json({ error: "Sign in to remove leads from a list." }, { status: 401 });
+  }
+
+  if (!isEmailVerified(user)) {
+    return NextResponse.json({ error: VERIFIED_ACCOUNT_REQUIRED_MESSAGE }, { status: 403 });
   }
 
   const payload = (await request.json()) as { leadIds?: string[] };
