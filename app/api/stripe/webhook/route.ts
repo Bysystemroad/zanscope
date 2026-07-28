@@ -1,15 +1,23 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getCreditPackageByStripePriceId } from "@/lib/stripe-packages";
 
 type StripeCheckoutSession = {
   id: string;
   object: "checkout.session";
   metadata?: {
     user_id?: string;
-    credits?: string;
     package_name?: string;
   };
+};
+
+type StripeLineItemsResponse = {
+  data?: Array<{
+    price?: {
+      id?: string;
+    };
+  }>;
 };
 
 type StripeEvent = {
@@ -65,10 +73,27 @@ function adminClient() {
   });
 }
 
+async function getCheckoutSessionPriceId(sessionId: string, stripeSecretKey: string) {
+  const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}/line_items?limit=1`, {
+    headers: {
+      Authorization: `Bearer ${stripeSecretKey}`
+    }
+  });
+
+  const data = (await response.json()) as StripeLineItemsResponse & { error?: { message?: string } };
+
+  if (!response.ok) {
+    throw new Error(data.error?.message || "Could not read checkout session line item.");
+  }
+
+  return data.data?.[0]?.price?.id || "";
+}
+
 export async function POST(request: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
-  if (!webhookSecret) {
+  if (!webhookSecret || !stripeSecretKey) {
     return NextResponse.json({ error: "Webhook is not configured." }, { status: 500 });
   }
 
@@ -87,19 +112,24 @@ export async function POST(request: Request) {
 
   const session = event.data.object;
   const userId = session.metadata?.user_id;
-  const credits = Number(session.metadata?.credits || 0);
-  const packageName = session.metadata?.package_name || "Credit package";
 
-  if (!session.id || !userId || !Number.isInteger(credits) || credits <= 0) {
+  if (!session.id || !userId) {
     return NextResponse.json({ error: "Checkout metadata is incomplete." }, { status: 400 });
+  }
+
+  const priceId = await getCheckoutSessionPriceId(session.id, stripeSecretKey);
+  const creditPackage = getCreditPackageByStripePriceId(priceId);
+
+  if (!creditPackage) {
+    return NextResponse.json({ error: "Checkout price is not mapped to a credit package." }, { status: 400 });
   }
 
   const supabase = adminClient();
   const { data, error } = await supabase.rpc("process_stripe_credit_purchase", {
     p_user_id: userId,
     p_stripe_session_id: session.id,
-    p_credits: credits,
-    p_package_name: packageName
+    p_credits: creditPackage.credits,
+    p_package_name: creditPackage.name
   });
 
   if (error) {

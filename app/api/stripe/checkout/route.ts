@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   body.set("client_reference_id", user.id);
   if (user.email) body.set("customer_email", user.email);
   body.set("metadata[user_id]", user.id);
-  body.set("metadata[credits]", String(creditPackage.credits));
+  body.set("metadata[package_key]", creditPackage.key);
   body.set("metadata[package_name]", creditPackage.name);
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
