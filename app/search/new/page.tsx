@@ -1,6 +1,8 @@
 import { AppShell } from "@/components/app-shell";
 import { SearchForm } from "@/components/search-form";
 
+export const dynamic = "force-dynamic";
+
 export default function NewSearchPage() {
   return (
     <AppShell>

@@ -50,9 +50,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <BrandLogo className="justify-self-start" />
               <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
                 <Link href="/dashboard" className="hover:text-white">Dashboard</Link>
-                <Link href="/search/new" className="hover:text-white">New Search</Link>
-                <Link href="/dashboard/leads" className="hover:text-white">Saved Leads</Link>
-                <Link href="/dashboard/lists" className="hover:text-white">Lists</Link>
+                <Link href="/new-search" className="hover:text-white">New Search</Link>
+                <Link href="/saved-leads" className="hover:text-white">Saved Leads</Link>
+                <Link href="/lists" className="hover:text-white">Lists</Link>
                 <Link href="/billing" className="hover:text-white">Billing</Link>
               </nav>
               <AccountMenu />

@@ -6,10 +6,10 @@ import { getUserProfile } from "@/lib/supabase/server";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
-  { href: "/search/new", label: "New Search", icon: Search },
+  { href: "/new-search", label: "New Search", icon: Search },
   { href: "/dashboard/history", label: "History", icon: Clock3 },
-  { href: "/dashboard/leads", label: "Saved Leads", icon: Users },
-  { href: "/dashboard/lists", label: "Lists", icon: ListChecks },
+  { href: "/saved-leads", label: "Saved Leads", icon: Users },
+  { href: "/lists", label: "Lists", icon: ListChecks },
   { href: "/dashboard/enrich", label: "Enrich List", icon: FileUp },
   { href: "/billing", label: "Billing", icon: CreditCard },
   { href: "/help", label: "Help Center", icon: HelpCircle },

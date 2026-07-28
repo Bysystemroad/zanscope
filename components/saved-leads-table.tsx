@@ -37,7 +37,7 @@ function pageHref(page: number, filters: SavedLeadsTableProps["filters"]) {
   Object.entries(filters).forEach(([key, value]) => {
     if (value) params.set(key, value);
   });
-  return `/dashboard/leads?${params.toString()}`;
+  return `/saved-leads?${params.toString()}`;
 }
 
 export function SavedLeadsTable({ leads, page, pageSize, total, totalPages, filters }: SavedLeadsTableProps) {
@@ -53,7 +53,7 @@ export function SavedLeadsTable({ leads, page, pageSize, total, totalPages, filt
     params.set("page", "1");
     if (value) params.set(key, value);
     else params.delete(key);
-    window.location.href = `/dashboard/leads?${params.toString()}`;
+    window.location.href = `/saved-leads?${params.toString()}`;
   }
 
   function submitTextFilter(key: "country" | "city", value: string) {

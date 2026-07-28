@@ -15,7 +15,7 @@ export default async function LeadListDetailPage({ params }: { params: Promise<{
   return (
     <AppShell>
       <div className="mb-6 flex flex-col gap-2">
-        <Link href="/dashboard/lists" className="text-sm font-medium text-muted-foreground hover:text-white">
+        <Link href="/lists" className="text-sm font-medium text-muted-foreground hover:text-white">
           Back to lists
         </Link>
         <h1 className="text-3xl font-semibold tracking-normal text-white">{list.name}</h1>

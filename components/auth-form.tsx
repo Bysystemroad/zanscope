@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ type SignupResponse = {
 
 export function AuthForm() {
   const router = useRouter();
+  const pathname = usePathname();
   const submittingRef = useRef(false);
   const redirectingRef = useRef(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -34,13 +35,19 @@ export function AuthForm() {
       authTrace("auth_form.redirect_started", { source });
 
       router.replace("/dashboard");
-
-      if (typeof window !== "undefined" && window.location.pathname !== "/dashboard") {
-        window.location.replace("/dashboard");
-      }
+      router.refresh();
     },
     [router]
   );
+
+  useEffect(() => {
+    if (!redirectingRef.current) return;
+
+    authTrace("auth_form.pathname_after_redirect", {
+      pathname,
+      reachedDashboard: pathname === "/dashboard"
+    });
+  }, [pathname]);
 
   useEffect(() => {
     if (!supabase || !isSupabaseConfigured) return;

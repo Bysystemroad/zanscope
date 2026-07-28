@@ -12,6 +12,8 @@ export const metadata: Metadata = noIndexMetadata(
   "Private Zanscope billing page for credit balance and credit package purchases."
 );
 
+export const dynamic = "force-dynamic";
+
 export default async function BillingPage({
   searchParams
 }: {

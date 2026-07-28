@@ -33,12 +33,16 @@ export async function middleware(request: NextRequest) {
     return redirectWithAuthCookies(canonicalUrl, response);
   }
 
-  const isLoginPage = pathname === "/login";
+  const isAuthPage = pathname === "/login" || pathname === "/signup";
   const isSearchDemoPage = pathname === "/search/results" && request.nextUrl.searchParams.get("demo") === "true";
   const isProtectedPage =
     pathname === "/dashboard" ||
     pathname.startsWith("/dashboard/") ||
     pathname === "/billing" ||
+    pathname === "/new-search" ||
+    pathname === "/saved-leads" ||
+    pathname === "/lists" ||
+    pathname.startsWith("/lists/") ||
     (pathname.startsWith("/search/") && !isSearchDemoPage);
   const hasVerifiedSession = Boolean(session && isEmailVerified(session.user));
 
@@ -49,10 +53,10 @@ export async function middleware(request: NextRequest) {
     hasVerifiedSession,
     emailVerified: session?.user ? isEmailVerified(session.user) : false,
     refreshedCookies: response.cookies.getAll().length,
-    response: isLoginPage && hasVerifiedSession ? "redirect" : isProtectedPage && !hasVerifiedSession ? "redirect" : "next"
+    response: isAuthPage && hasVerifiedSession ? "redirect" : isProtectedPage && !hasVerifiedSession ? "redirect" : "next"
   });
 
-  if (isLoginPage && hasVerifiedSession) {
+  if (isAuthPage && hasVerifiedSession) {
     const destination = new URL("/dashboard", request.url);
     authTrace("middleware.redirect", {
       pathname,
@@ -82,7 +86,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/dashboard/:path*", "/billing", "/search/:path*"]
+  matcher: ["/login", "/signup", "/dashboard/:path*", "/billing", "/search/:path*", "/new-search", "/saved-leads", "/lists/:path*"]
 };
 
 function redirectWithAuthCookies(url: URL, response: NextResponse) {

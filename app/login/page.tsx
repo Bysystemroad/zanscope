@@ -1,13 +1,31 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { AuthForm } from "@/components/auth-form";
+import { isEmailVerified } from "@/lib/auth-security";
 import { noIndexMetadata } from "@/lib/seo";
+import { isServerSupabaseConfigured } from "@/lib/supabase/server";
 
 export const metadata: Metadata = noIndexMetadata(
   "Login to Zanscope",
   "Secure access to your Zanscope lead workspace."
 );
 
-export default function LoginPage() {
+export const dynamic = "force-dynamic";
+
+export default async function LoginPage() {
+  if (isServerSupabaseConfigured()) {
+    const supabase = createServerComponentClient({ cookies });
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (user && isEmailVerified(user)) {
+      redirect("/dashboard");
+    }
+  }
+
   return (
     <main className="relative overflow-hidden">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(82,157,202,0.18),transparent_32%),radial-gradient(circle_at_78%_15%,rgba(255,255,255,0.08),transparent_28%),linear-gradient(135deg,#080f14_0%,#101820_48%,#05080c_100%)]" />

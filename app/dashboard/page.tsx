@@ -34,7 +34,7 @@ export default async function DashboardPage() {
           <h1 className="text-3xl font-semibold tracking-normal text-white">Dashboard</h1>
           <p className="mt-1 text-muted-foreground">Welcome back, {userProfile.email}</p>
         </div>
-        <Link href="/search/new">
+        <Link href="/new-search">
           <Button>
             <Search className="h-4 w-4" />
             New search
@@ -52,7 +52,7 @@ export default async function DashboardPage() {
                 Start by creating your first lead search or uploading a company list for enrichment.
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
-                <Link href="/search/new">
+                <Link href="/new-search">
                   <Button>
                     <Search className="h-4 w-4" />
                     Start a Lead Search

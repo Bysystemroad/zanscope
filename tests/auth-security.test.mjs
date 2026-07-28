@@ -15,6 +15,8 @@ const landingCopy = fs.readFileSync(new URL("../components/landing-page-client.t
 const authCopy = fs.readFileSync(new URL("../components/auth-form.tsx", import.meta.url), "utf8");
 const accountMenuSource = fs.readFileSync(new URL("../components/account-menu.tsx", import.meta.url), "utf8");
 const middlewareSource = fs.readFileSync(new URL("../middleware.ts", import.meta.url), "utf8");
+const rootLayoutSource = fs.readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
+const appShellSource = fs.readFileSync(new URL("../components/app-shell.tsx", import.meta.url), "utf8");
 
 test("new verified signup bonus is exactly 50 credits", () => {
   assert.equal(SIGNUP_BONUS_CREDITS, 50);
@@ -92,4 +94,28 @@ test("UI displays 50 free credits instead of 100", () => {
 test("signup confirmation explains email verification before credits", () => {
   assert.match(SIGNUP_BONUS_PENDING_MESSAGE, /verify your account/i);
   assert.match(SIGNUP_BONUS_PENDING_MESSAGE, /50 free credits/i);
+});
+
+test("auth redirect does not force an immediate full page reload", () => {
+  assert.match(authCopy, /router\.replace\("\/dashboard"\)/);
+  assert.match(authCopy, /router\.refresh\(\)/);
+  assert.doesNotMatch(authCopy, /window\.location\.replace\("\/dashboard"\)/);
+});
+
+test("global and dashboard navigation use canonical protected routes", () => {
+  for (const source of [rootLayoutSource, appShellSource]) {
+    assert.match(source, /href[:=]\s*["{]?"\/dashboard"/);
+    assert.match(source, /href[:=]\s*["{]?"\/new-search"/);
+    assert.match(source, /href[:=]\s*["{]?"\/saved-leads"/);
+    assert.match(source, /href[:=]\s*["{]?"\/lists"/);
+    assert.match(source, /href[:=]\s*["{]?"\/billing"/);
+  }
+});
+
+test("middleware protects canonical navigation aliases", () => {
+  assert.match(middlewareSource, /pathname === "\/new-search"/);
+  assert.match(middlewareSource, /pathname === "\/saved-leads"/);
+  assert.match(middlewareSource, /pathname === "\/lists"/);
+  assert.match(middlewareSource, /pathname\.startsWith\("\/lists\/"\)/);
+  assert.match(middlewareSource, /pathname === "\/login" \|\| pathname === "\/signup"/);
 });
